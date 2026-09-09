@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vantage</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Vantage</h1>
+    <p class="tagline">Coaching-first match review for Deadlock</p>
+  </header>
+
+  <main id="app">
+    <section id="landing" class="view">
+      <form id="lookup-form">
+        <label for="steam-input">Steam ID or account ID</label>
+        <input id="steam-input" type="text" inputmode="numeric" placeholder="e.g. 186993885" required>
+        <button type="submit">Review my last match</button>
+      </form>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section id="review" class="view" hidden>
+      <button id="back-btn" class="link-btn">&larr; New lookup</button>
+      <div id="review-card"></div>
+    </section>
+  </main>
+
+  <script src="steamid.js?v=1"></script>
+  <script src="api.js?v=1"></script>
+  <script src="analyze.js?v=1"></script>
+  <script src="charts.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
