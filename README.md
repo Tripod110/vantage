@@ -155,13 +155,17 @@ See [`docs/api-notes.md`](docs/api-notes.md) for endpoint-level notes on both.
 
 ## Status
 
-**v0 prototype working**, verified live against `api.deadlock-api.com`
-with no backend: a SteamID64/account id in → most recent match → economy
-curve vs. baseline, flagged moments (including an item-timing flag), and a
-generated quest. Serve locally with `python -m http.server` from this
-directory and open `index.html`.
+**v0 prototype live** at https://tripod110.github.io/vantage/, verified
+against `api.deadlock-api.com` with no backend: a SteamID64/account id in
+→ most recent match → economy curve vs. baseline, flagged moments
+(including an item-timing flag), and a generated quest. Deployed straight
+from this repo's `main` branch root via GitHub Pages — no build step, no
+`gh-pages` branch. To run locally instead: `python -m http.server` from
+this directory and open `index.html`.
 
-Not yet done: GitHub Pages deploy + service worker/cache-busting, non-numeric
-(vanity URL) Steam id input, and Clip Review (v1, see PROMPTS.md).
+Not yet done: non-numeric (vanity URL) Steam id input, and Clip Review
+(v1, see PROMPTS.md). No service worker/cache-busting — unlike peak/bloom,
+Vantage isn't installable/offline-first, so that part of the original
+"Tech stack" note doesn't apply here.
 
 See [`PROMPTS.md`](PROMPTS.md) for the running decision log.

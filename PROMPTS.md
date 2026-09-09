@@ -215,3 +215,18 @@ we declared is complete for now"
   in README. Remaining known gaps (not blocking v0): GitHub Pages deploy +
   service worker, vanity-URL Steam input, Clip Review (v1). Updated
   README's "Architecture" and "Status" sections accordingly.
+
+**Prompt:** "deploy it to GitHub Pages"
+
+- `gh` CLI is now installed and authenticated as Tripod110 (it wasn't when
+  the repo was first created — see the entry above from before this
+  machine had it). Committed the v0 prototype (`7790177`) and pushed to
+  `main`, then enabled Pages via
+  `gh api repos/Tripod110/vantage/pages -X POST -f source[branch]=main -f source[path]=/`
+  — serving straight from the repo root, no `gh-pages` branch or build
+  step needed (matches the zero-build stack). Live at
+  https://tripod110.github.io/vantage/. Did **not** add a service worker
+  or `?v=N` cache-busting for this deploy — unlike peak/bloom, Vantage
+  isn't installable/offline-first (it needs a live API call every visit
+  regardless), so that piece of the original "Tech stack" section doesn't
+  actually apply; revisit only if Vantage ever adds a PWA manifest.
