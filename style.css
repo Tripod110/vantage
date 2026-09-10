@@ -19,6 +19,10 @@
 
 * { box-sizing: border-box; }
 
+/* Must outrank the display rules below (.view, .tabs, .card…), or an
+   element toggled with el.hidden stays on screen. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -29,13 +33,15 @@ body {
 }
 
 .topbar {
-  padding: 40px 20px 12px;
+  padding: 28px 20px 0;
+  max-width: 760px;
+  margin: 0 auto;
   text-align: center;
 }
 .topbar h1 {
   margin: 0;
   font-family: 'Sora', 'Inter', sans-serif;
-  font-size: 32px;
+  font-size: 30px;
   letter-spacing: 0.01em;
   color: var(--accent);
   text-shadow: 0 0 30px rgba(240,160,32,0.25);
@@ -46,11 +52,39 @@ body {
   font-size: 14px;
 }
 
+.tabs {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-ghost { margin-left: auto; font-size: 13px; color: var(--text-faint); }
+
 #app {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 24px 20px 60px;
 }
+.view { display: block; }
 
 #landing form {
   display: flex;
@@ -161,11 +195,148 @@ body {
 }
 .link-btn:hover { color: var(--text); }
 
-#review-card {
+#review-card,
+#dashboard {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
+/* ── Dashboard: identity ─────────────────────────────────────────────── */
+.identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.identity-who {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.identity-who h2 {
+  margin: 0;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.identity-who .dim { font-size: 13px; margin-top: 2px; }
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.avatar-blank { background: var(--panel-hover); }
+.identity-rank {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rank-badge { width: 46px; height: 46px; object-fit: contain; }
+.rank-text { display: flex; flex-direction: column; line-height: 1.35; }
+.rank-name {
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+}
+.rank-text .dim { font-size: 12px; }
+
+/* ── Dashboard: form over the window ─────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.stat-value {
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stat-value .dash { color: var(--text-faint); margin: 0 1px; }
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+.trend { margin-top: 14px; }
+.trend canvas { width: 100%; height: 54px; display: block; }
+.trend-caption {
+  margin: 6px 0 0;
+  font-size: 12px;
+  text-align: right;
+}
+.up { color: var(--good); }
+.down { color: var(--bad); }
+
+/* ── Dashboard: match list ───────────────────────────────────────────── */
+.match-row {
+  display: grid;
+  grid-template-columns: 26px 28px 1fr auto auto auto auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 6px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.match-row:hover { background: var(--panel-hover); border-left-color: var(--accent); }
+.match-row.win .result-pill { color: var(--good); }
+.match-row.loss .result-pill { color: var(--bad); }
+.result-pill { font-weight: 700; font-size: 13px; }
+.hero-icon { width: 28px; height: 28px; object-fit: contain; }
+.hero-icon.lg { width: 40px; height: 40px; }
+.hero-icon-blank { display: inline-block; background: var(--panel-hover); border-radius: 6px; }
+.hero-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.match-row .kda { font-variant-numeric: tabular-nums; color: var(--text-dim); }
+.match-row .kda .sep { color: var(--text-faint); margin: 0 1px; }
+.match-row .souls,
+.match-row .dur {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.match-row .ago {
+  color: var(--text-faint);
+  font-size: 12px;
+  min-width: 66px;
+  text-align: right;
+}
+
+.review-pref { justify-content: center; padding-top: 4px; }
+.mh-left { display: flex; align-items: center; gap: 12px; }
 
 .card {
   background: var(--panel);
@@ -261,7 +432,14 @@ body {
   line-height: 1.5;
 }
 
-@media (max-width: 480px) {
-  .card { padding: 16px 18px; border-radius: 12px; }
+@media (max-width: 560px) {
+  .card { padding: 16px 14px; border-radius: 12px; }
   .match-header h2 { font-size: 17px; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .identity { justify-content: flex-start; }
+  /* Souls and duration are the first things to go when space is tight —
+     result, hero, KDA and recency carry the scan. */
+  .match-row { grid-template-columns: 22px 26px 1fr auto auto; gap: 8px; }
+  .match-row .souls,
+  .match-row .dur { display: none; }
 }

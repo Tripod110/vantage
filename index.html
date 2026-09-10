@@ -4,44 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vantage</title>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
   <header class="topbar">
-    <h1>Vantage</h1>
-    <p class="tagline">Coaching-first match review for Deadlock</p>
+    <div class="brand">
+      <h1>Vantage</h1>
+      <p class="tagline">Your last 20 games, read closely</p>
+    </div>
+    <nav id="tabs" class="tabs" hidden>
+      <button class="tab" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="review">Review</button>
+      <button id="switch-account" class="tab tab-ghost" title="Use a different account">Switch</button>
+    </nav>
   </header>
 
   <main id="app">
-    <section id="landing" class="view">
+    <!-- First run: who are you? -->
+    <section id="landing" class="view" hidden>
       <form id="lookup-form">
         <label for="steam-input">Steam ID or account ID</label>
         <input id="steam-input" type="text" inputmode="numeric" placeholder="e.g. 186993885" required>
-        <p class="hint">Compares against your last 20 games, cached on this device — later visits only fetch what's new.</p>
-
+        <p class="hint">Vantage keeps your last 20 games on this device and only fetches what's new after that.</p>
         <label class="toggle-row">
           <input id="teaching-toggle" type="checkbox">
           <span>Teaching mode &mdash; explain terms as it goes</span>
         </label>
-
-        <button type="submit">Review my last match</button>
+        <button type="submit">Open my dashboard</button>
       </form>
-      <p id="status" class="status"></p>
     </section>
+
+    <section id="dashboard" class="view" hidden></section>
 
     <section id="review" class="view" hidden>
-      <button id="back-btn" class="link-btn">&larr; New lookup</button>
+      <button id="back-btn" class="link-btn">&larr; Back to dashboard</button>
       <div id="review-card"></div>
     </section>
+
+    <p id="status" class="status"></p>
   </main>
 
-  <script src="steamid.js?v=5"></script>
-  <script src="api.js?v=5"></script>
-  <script src="queue.js?v=5"></script>
-  <script src="store.js?v=5"></script>
-  <script src="history.js?v=5"></script>
-  <script src="analyze.js?v=5"></script>
-  <script src="charts.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="steamid.js?v=6"></script>
+  <script src="api.js?v=6"></script>
+  <script src="queue.js?v=6"></script>
+  <script src="store.js?v=6"></script>
+  <script src="assets.js?v=6"></script>
+  <script src="history.js?v=6"></script>
+  <script src="analyze.js?v=6"></script>
+  <script src="charts.js?v=6"></script>
+  <script src="dashboard.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

@@ -1,6 +1,55 @@
 /* Vantage — canvas-based economy curve chart. No charting library, matching
    peak's charts.js convention (custom canvas draw, no dependency). */
 
+/** Small filled trend line, no axes — used for the rank-score trend across the window. */
+function drawSparkline(canvas, values) {
+  if (!canvas || values.length < 2) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const pad = 6;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  /* Floor the span, or auto-scaling turns a 1-point score wobble into a cliff.
+     player_score moves ~1 per subrank, so ~4 points is a real move; anything
+     smaller should read as small. */
+  const MIN_SPAN = 4;
+  const span = Math.max(max - min, MIN_SPAN);
+  const mid = (max + min) / 2;
+  const lo = Math.min(min, mid - span / 2);
+  const x = (i) => pad + (i / (values.length - 1)) * (w - pad * 2);
+  const y = (v) => h - pad - ((v - lo) / span) * (h - pad * 2);
+
+  const rising = values[values.length - 1] >= values[0];
+  const stroke = rising ? '#4caf7d' : '#e05a5a';
+
+  ctx.beginPath();
+  values.forEach((v, i) => (i === 0 ? ctx.moveTo(x(i), y(v)) : ctx.lineTo(x(i), y(v))));
+  const line = new Path2D();
+  values.forEach((v, i) => (i === 0 ? line.moveTo(x(i), y(v)) : line.lineTo(x(i), y(v))));
+
+  // Soft fill under the line, then the line itself.
+  ctx.lineTo(x(values.length - 1), h - pad);
+  ctx.lineTo(x(0), h - pad);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, rising ? 'rgba(76,175,125,0.22)' : 'rgba(224,90,90,0.22)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke(line);
+}
+
 /** Draws two overlaid lines (this match vs. baseline average) onto a canvas element.
     seriesA/seriesB: arrays of numbers (souls), one point per minute, same length. */
 function drawEconomyCurve(canvas, seriesA, seriesB, labelA = 'This match', labelB = 'Your recent average') {

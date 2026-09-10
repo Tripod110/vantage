@@ -174,27 +174,45 @@ See [`docs/api-notes.md`](docs/api-notes.md) for endpoint-level notes on both.
 4. **Quest engine** — `buildQuest()` in `analyze.js`: one rule-based "try
    this next game" line from whichever baseline metric this match fell
    furthest below. Rank-cohort benchmark quests are still future work.
-5. **Review UI** — [`index.html`](index.html) / [`app.js`](app.js) /
+5. **Catalogs** — [`assets.js`](assets.js). Hero and rank catalogs from
+   `/v1/assets/*`, cached on disk for a week. Rank *names* are deliberately
+   not hard-coded: the list ported from Deadlock Tracker was already stale
+   against live data (Alchemist/Arcanist/Ritualist/Archon where the API now
+   returns Acolyte/Sentinel/Mystic and no Archon), which would have
+   mislabelled every badge.
+6. **Dashboard** — [`dashboard.js`](dashboard.js). The hub: Steam identity
+   (avatar, persona, current rank badge + est. score), form across the
+   window (record, win rate, KDA, souls/min), a rank-score trend sparkline,
+   and the 20 matches themselves. Every match row opens that match's review
+   — the review is no longer hard-wired to "most recent".
+7. **Review UI** — [`index.html`](index.html) / [`app.js`](app.js) /
    [`charts.js`](charts.js) / [`style.css`](style.css): single-match report
    card with a canvas economy-curve chart, flagged moments, and the quest.
-   A **teaching-mode toggle** switches every generated line to a voice that
-   defines terms inline (Seance's std/npm two-voice pattern) — same data,
-   same rules, more context for a newer player.
+   Baseline for a reviewed match is the *other* 19 games in the window, so a
+   match is never compared against itself. A **teaching-mode toggle**
+   switches every generated line to a voice that defines terms inline
+   (Seance's std/npm two-voice pattern) — same data, same rules, more
+   context for a newer player.
+
+`app.js` is the shell: it remembers whose page this is, paints the
+dashboard from cache before the network sync finishes, and routes between
+the two tabs.
 
 ## Status
 
-**v0 prototype live** at https://tripod110.github.io/vantage/, verified
-against `api.deadlock-api.com` with no backend: a SteamID64/account id in
-→ most recent match → economy curve vs. baseline, flagged moments
-(including an item-timing flag), and a generated quest. Deployed straight
-from this repo's `main` branch root via GitHub Pages — no build step, no
-`gh-pages` branch. To run locally instead: `python -m http.server` from
-this directory and open `index.html`.
+**Live** at https://tripod110.github.io/vantage/, verified against
+`api.deadlock-api.com` with no backend. Enter a SteamID64/account id once
+and it's remembered; after that you land on a dashboard of your last 20
+games, and any match opens its own review. Deployed straight from this
+repo's `main` branch root via GitHub Pages — no build step, no `gh-pages`
+branch. To run locally: `python -m http.server` from this directory.
 
-Not yet done: non-numeric (vanity URL) Steam id input, cross-device sync
-(a Google-login + Firebase design is under discussion, see PROMPTS.md),
-and Clip Review (v1). No service worker/cache-busting — unlike peak/bloom,
-Vantage isn't installable/offline-first, so that part of the original
-"Tech stack" note doesn't apply here.
+Not yet done: **Statlocker rank** (blocked — their API needs a
+manually-approved key, no self-serve signup; see `docs/api-notes.md`),
+non-numeric (vanity URL) Steam id input, cross-device sync (a Google-login
++ Firebase design is under discussion, see PROMPTS.md), and Clip Review.
+No service worker/cache-busting — unlike peak/bloom, Vantage isn't
+installable/offline-first, so that part of the original "Tech stack" note
+doesn't apply here.
 
 See [`PROMPTS.md`](PROMPTS.md) for the running decision log.

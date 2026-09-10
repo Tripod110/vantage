@@ -339,3 +339,53 @@ across devices?"
   built — next step is the user completing the Firebase Console setup and
   handing over the resulting (non-secret) config, same as peak's
   `firebase-config.js` REPLACE_ME pattern.
+
+**Prompt:** "before that we should work on the actual app itself... I
+don't wanna rush things. Re-develop the experience of the app itself.
+First tab is a dashboard that houses the recent matches and my current
+rank and statlocker rank (if possible). It should have my profile pic
+from steam on there somewhere to signify this is my page. Overall the
+experience of a dashboard should really feel like a hub for my
+performance over the last 20 games I've played."
+
+- Deliberately parked the Firebase/sync work to build the actual product
+  experience first. Restructured the single-screen lookup form into a
+  **tabbed app shell**: Dashboard | Review | Switch.
+- **Verified every data source live before building on it** — which caught
+  a real bug: the `RANK_TIERS` constant ported from Deadlock Tracker is
+  **stale**. It listed Alchemist/Arcanist/Ritualist/Archon; the live
+  `/v1/assets/ranks` returns Acolyte/Sentinel/Mystic and has no Archon at
+  all, so the user's rank 33 would have rendered "Alchemist 3" instead of
+  the correct "Acolyte 3". Deleted the constant; rank names and badge
+  images now come from the live catalog (new **`assets.js`**, disk-cached
+  for a week via a new `cachedAsset()` in `store.js`). Lesson worth
+  keeping: ported constants are point-in-time snapshots of someone else's
+  game patch.
+- **`dashboard.js`** (new): identity block (Steam `avatarfull` + persona +
+  "78 matches in the last 30 days" + rank badge and ≈est. score), form
+  across the window (record / win rate / KDA / souls-min), a rank-score
+  trend sparkline, and the 20-match list with hero icons, K/D/A, souls,
+  duration and relative time. Every row is a button that opens that
+  match's review.
+- **Review is no longer hard-wired to the most recent match** — `openReview
+  (matchId)` reviews any match in the window, with the *other* 19 games as
+  its baseline so a match is never compared against itself.
+- App now **remembers the account** (`vantage:accountId`) and paints the
+  dashboard from the local cache before the network sync finishes, so
+  return visits are instant. "Switch" forgets the account but deliberately
+  keeps the cached history, so switching back doesn't re-fetch.
+- **Statlocker rank: not possible right now.** Their API issues keys only
+  after a manual application (Steam sign-in, no self-serve), so there's no
+  key to call it with. Left out rather than shipping dead UI; noted in
+  README's status.
+- Two bugs found and fixed during verification: (1) `.tabs { display:flex }`
+  and `.view { display:block }` were overriding the `hidden` attribute, so
+  "hidden" sections still rendered (landing showed the tab bar *and* the
+  review's back button) — fixed with a `[hidden] { display:none
+  !important }` rule. (2) the rank sparkline auto-scaled its y-axis to the
+  data, turning a **1-point** score wobble into a dramatic cliff; floored
+  the span at 4 points so small moves look small, which is the same
+  "don't overstate what the data supports" rule the text already follows.
+- Verified live end to end (first-run fetch, instant cached repaint,
+  clicking into a specific match's review, teaching-mode toggle
+  re-rendering in place, account switch, and the mobile layout at 375px).

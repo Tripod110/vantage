@@ -10,11 +10,16 @@ const API_BASE = 'https://api.deadlock-api.com';
 /** Deadlock team ids. */
 const TEAM = { AMBER: 0, SAPPHIRE: 1 };
 
-/** Rank tier names by division (badge/rank = division*10 + subrank 1-6). */
-const RANK_TIERS = [
-  'Obscurus', 'Initiate', 'Seeker', 'Alchemist', 'Arcanist', 'Ritualist',
-  'Emissary', 'Archon', 'Oracle', 'Phantom', 'Ascendant', 'Eternus'
-];
+/* Rank tier NAMES deliberately are not hard-coded here. The list ported from
+   Deadlock Tracker was already stale against live data (it had Alchemist /
+   Arcanist / Ritualist / Archon where the API now returns Acolyte / Sentinel /
+   Mystic and no Archon at all), which would have mislabelled every rank badge.
+   Names come from GET /v1/assets/ranks via assets.js, cached on disk. */
+
+/** Badge image for a rank: division 0-11, subrank 1-6. PNG (not webp). */
+function rankBadgeUrl(division, subrank) {
+  return `${API_BASE}/v1/assets/ranks/${division}/${Math.min(6, Math.max(1, subrank))}/image`;
+}
 
 async function getJson(path) {
   const ctrl = new AbortController();
