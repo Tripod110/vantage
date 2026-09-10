@@ -389,3 +389,39 @@ performance over the last 20 games I've played."
 - Verified live end to end (first-run fetch, instant cached repaint,
   clicking into a specific match's review, teaching-mode toggle
   re-rendering in place, account switch, and the mobile layout at 375px).
+
+**Prompt:** "this is a good baseline. not a fan of the match list. At
+least not on the dashboard. how can we make it look more modern? like an
+actual app dashboard? Could we generate some mockups of ideas you have?"
+
+- Built four dashboard directions as a design canvas (artboard sources in
+  `design/`, published to a Claude artifact). All four are hi-fi and use
+  Vantage's real tokens (Sora/Inter, `#0b0c10` ground, `#15171e` panels,
+  `#f0a020` accent, 14px radii) plus the real last-20 data and downloaded
+  Steam avatar / hero icons, so they read as the same app rather than a
+  different product.
+- Framed the brief as one question — **where do the matches go?** — since
+  that's the actual complaint behind "not a fan of the match list":
+  - **A · Form strip** (`Main.dc.html`) — the 20-game window becomes one
+    object: colour = result, bar height = souls/min. Match detail on
+    hover. Tradeoff: no hero/KDA visible until you hover.
+  - **B · Coach-first** (`Coach.dc.html`) — leads with a diagnosis
+    ("you're falling behind before 10 minutes"), numbers below as
+    evidence, matches demoted to a rail. Most true to the positioning.
+    Tradeoff: needs a real cross-match pattern engine we haven't built —
+    the current quest logic is per-match only — and falls flat if the
+    headline is obvious or wrong.
+  - **C · Command center** (`CommandCenter.dc.html`) — sidebar shell,
+    rings vs. own median, switchable trend chart. Tradeoff: the most
+    conventional, i.e. the most like every other tracker.
+  - **D · Match spotlight** (`Spotlight.dc.html`) — last game as a full
+    card carrying its own verdict + economy curve, older games as cards.
+    Tradeoff: ~5 games before scrolling, and duplicates the Review tab.
+- Static mockups, nothing clickable — the ask was direction-picking.
+- Measured every artboard's natural height in a browser before finalizing
+  (flattened each `.dc.html` and read `scrollHeight`) rather than guessing
+  frame sizes: no clipping, but Main and Spotlight had ~130px of dead
+  space, so frames were tightened and the canvas re-seeded.
+- The ~2.6MB seeded canvas file is gitignored; the artboards, canvas.json
+  and images in `design/` are the source of truth and re-seed from any
+  machine.

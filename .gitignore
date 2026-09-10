@@ -1,6 +1,10 @@
 node_modules/
 dist/
 build/
+
+# Seeded design-canvas output (~2.6MB of bundled editor). The artboards,
+# canvas.json and images in design/ are the source; re-seed from those.
+design/vantage-dashboard-directions.html
 .env
 .env.local
 *.log

@@ -1,0 +1,46 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "A · Form strip", "x": 0, "y": 0, "w": 1120, "h": 650 },
+    { "file": "Coach.dc.html", "title": "B · Coach-first", "x": 1240, "y": 0, "w": 1120, "h": 710 },
+    { "file": "CommandCenter.dc.html", "title": "C · Command center", "x": 0, "y": 1000, "w": 1120, "h": 900 },
+    { "file": "Spotlight.dc.html", "title": "D · Match spotlight", "x": 1240, "y": 1000, "w": 1120, "h": 680 }
+  ],
+  "annotations": [
+    {
+      "id": "note-a",
+      "x": 0,
+      "y": -170,
+      "w": 560,
+      "text": "A · FORM STRIP\nThe 20-game window becomes one object you read in a glance: colour = result, bar height = souls/min that game. The match list survives as a hover.\n\nTradeoff: no hero or KDA visible until you hover. Scanning \"which game was the Lash one\" gets slower."
+    },
+    {
+      "id": "note-b",
+      "x": 1240,
+      "y": -170,
+      "w": 560,
+      "text": "B · COACH-FIRST\nLeads with a diagnosis, then the numbers that justify it. Most true to \"coaching-first, not a stats dashboard\". Matches demoted to a thin rail.\n\nTradeoff: lives or dies on the headline being right. If the claim is obvious or wrong, the whole page feels hollow — and it needs a real cross-match pattern engine, not just the per-match diff we have."
+    },
+    {
+      "id": "note-c",
+      "x": 0,
+      "y": 830,
+      "w": 560,
+      "text": "C · COMMAND CENTER\nSidebar shell, rings comparing this window to your own median, one big switchable trend chart. The most conventional \"app dashboard\" of the four.\n\nTradeoff: it's also the most like every other tracker — the thing Vantage is trying not to be. Densest to read."
+    },
+    {
+      "id": "note-d",
+      "x": 1240,
+      "y": 830,
+      "w": 560,
+      "text": "D · MATCH SPOTLIGHT\nKeeps matches central but stops being a table: the last game gets a full card with its verdict and economy curve already on it, older games become cards with one insight each.\n\nTradeoff: only ~5 games fit before scrolling, and it repeats what the Review tab already shows."
+    },
+    {
+      "id": "note-intro",
+      "x": 620,
+      "y": -300,
+      "w": 620,
+      "text": "Four answers to the same question: where do the matches go?\nAll four use Vantage's real tokens (Sora/Inter, #0b0c10 ground, #f0a020 accent) and your real data from the last 20 games.\nStatic mockups — nothing clickable yet."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

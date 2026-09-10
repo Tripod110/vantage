@@ -207,6 +207,12 @@ games, and any match opens its own review. Deployed straight from this
 repo's `main` branch root via GitHub Pages — no build step, no `gh-pages`
 branch. To run locally: `python -m http.server` from this directory.
 
+**In flight:** the dashboard's match list reads as a table rather than an
+app surface, so four redesign directions are up for a decision — see
+`design/` for the artboard sources (`Main`/`Coach`/`CommandCenter`/
+`Spotlight`, laid out by `canvas.json`) and PROMPTS.md for what each one
+trades off. Nothing is wired into the app yet.
+
 Not yet done: **Statlocker rank** (blocked — their API needs a
 manually-approved key, no self-serve signup; see `docs/api-notes.md`),
 non-numeric (vanity URL) Steam id input, cross-device sync (a Google-login

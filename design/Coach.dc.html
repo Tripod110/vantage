@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap">
+  <style>
+    body {
+      margin: 0;
+      background: #0b0c10 radial-gradient(1200px 500px at 50% -10%, rgba(240,160,32,0.10), transparent 60%);
+      color: #eceef2;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: #f0a020; } a:hover { color: #ffc25c; }
+  </style>
+</helmet>
+
+<div style="padding: 28px 32px; display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Identity demoted to a slim bar: present, not the point -->
+  <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <img src="avatar.jpg" alt="" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.14); object-fit: cover;">
+    <span style="font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600;">Tripod</span>
+    <span style="width: 1px; height: 16px; background: rgba(255,255,255,0.14);"></span>
+    <span style="font-size: 13px; color: rgba(236,238,242,0.62);">Acolyte 3</span>
+    <span style="font-size: 13px; color: rgba(236,238,242,0.4);">&asymp;15</span>
+    <span style="margin-left: auto; font-size: 13px; color: rgba(236,238,242,0.4);">last 20 games &middot; 4&ndash;16</span>
+  </div>
+
+  <!-- The diagnosis IS the page -->
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #f0a020; font-weight: 700;">What's costing you games</span>
+    <h1 style="margin: 0; font-family: 'Sora', sans-serif; font-size: 40px; line-height: 1.15; font-weight: 700; max-width: 800px; text-wrap: pretty;">
+      You're falling behind before the 10-minute mark.
+    </h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; color: rgba(236,238,242,0.62); max-width: 720px; text-wrap: pretty;">
+      In 13 of your last 20 games you were under the lobby's average Souls at 10 minutes. You won 1 of those 13. The seven games where you were even or ahead account for 3 of your 4 wins.
+    </p>
+  </div>
+
+  <!-- Evidence, not decoration: each number is why the claim above holds -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+    <div style="background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(236,238,242,0.4); font-weight: 600;">Behind at 10 min</span>
+      <span style="font-family: 'Sora', sans-serif; font-size: 30px; font-weight: 700;">13<span style="font-size: 17px; color: rgba(236,238,242,0.4); font-weight: 600;">/20</span></span>
+      <div style="height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden;"><div style="width: 65%; height: 100%; background: #e05a5a;"></div></div>
+    </div>
+    <div style="background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(236,238,242,0.4); font-weight: 600;">Win rate when behind</span>
+      <span style="font-family: 'Sora', sans-serif; font-size: 30px; font-weight: 700; color: #e05a5a;">8%</span>
+      <span style="font-size: 12px; color: rgba(236,238,242,0.62);">vs. <span style="color: #4caf7d;">43%</span> when even or ahead</span>
+    </div>
+    <div style="background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(236,238,242,0.4); font-weight: 600;">Typical gap at 10 min</span>
+      <span style="font-family: 'Sora', sans-serif; font-size: 30px; font-weight: 700;">&minus;900</span>
+      <span style="font-size: 12px; color: rgba(236,238,242,0.62);">Souls vs. the lobby average</span>
+    </div>
+  </div>
+
+  <!-- The prescription -->
+  <div style="border: 1px solid rgba(240,160,32,0.35); border-radius: 14px; padding: 20px 22px; background: linear-gradient(160deg, rgba(240,160,32,0.10), rgba(240,160,32,0.03)); display: flex; align-items: center; gap: 20px;">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
+      <circle cx="12" cy="12" r="9" stroke="#f0a020" stroke-width="1.6"/>
+      <path d="M12 7.5v5l3 2" stroke="#f0a020" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #f0a020; font-weight: 700;">Try this next game</span>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5;">Prioritize farm over fights before the 10-minute mark &mdash; take the safe lane wave instead of contesting.</p>
+    </div>
+    <span style="margin-left: auto; font-size: 13px; color: #f0a020; white-space: nowrap;">See the evidence &rarr;</span>
+  </div>
+
+  <!-- Matches: a thin rail, not a table -->
+  <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(236,238,242,0.4); font-weight: 600;">Recent games</span>
+      <span style="font-size: 12px; color: #f0a020;">Browse all 20 &rarr;</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <div style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-left: 2px solid #e05a5a;">
+        <img src="pocket_sm.png" alt="" style="width: 22px; height: 22px; object-fit: contain;">
+        <span style="font-size: 13px; font-weight: 500;">Pocket</span>
+        <span style="margin-left: auto; font-size: 12px; color: rgba(236,238,242,0.4); font-variant-numeric: tabular-nums;">7h</span>
+      </div>
+      <div style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-left: 2px solid #e05a5a;">
+        <img src="pocket_sm.png" alt="" style="width: 22px; height: 22px; object-fit: contain;">
+        <span style="font-size: 13px; font-weight: 500;">Pocket</span>
+        <span style="margin-left: auto; font-size: 12px; color: rgba(236,238,242,0.4); font-variant-numeric: tabular-nums;">22h</span>
+      </div>
+      <div style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-left: 2px solid #e05a5a;">
+        <img src="lash_sm.png" alt="" style="width: 22px; height: 22px; object-fit: contain;">
+        <span style="font-size: 13px; font-weight: 500;">Lash</span>
+        <span style="margin-left: auto; font-size: 12px; color: rgba(236,238,242,0.4); font-variant-numeric: tabular-nums;">22h</span>
+      </div>
+      <div style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-left: 2px solid #e05a5a;">
+        <img src="seven_sm.png" alt="" style="width: 22px; height: 22px; object-fit: contain;">
+        <span style="font-size: 13px; font-weight: 500;">Seven</span>
+        <span style="margin-left: auto; font-size: 12px; color: rgba(236,238,242,0.4); font-variant-numeric: tabular-nums;">1d</span>
+      </div>
+      <div style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #15171e; border: 1px solid rgba(255,255,255,0.08); border-left: 2px solid #4caf7d;">
+        <img src="paradox_sm.png" alt="" style="width: 22px; height: 22px; object-fit: contain;">
+        <span style="font-size: 13px; font-weight: 500;">Paradox</span>
+        <span style="margin-left: auto; font-size: 12px; color: rgba(236,238,242,0.4); font-variant-numeric: tabular-nums;">2d</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
