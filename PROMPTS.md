@@ -444,3 +444,20 @@ actual app dashboard? Could we generate some mockups of ideas you have?"
   version of the same card.
 - Measured the artboard's natural height (579px) before placing it, same
   as the other four. A/B/C/D keep their original identities and positions.
+
+**Prompt:** "give me the prompt for everything we've made thus far. I'm going
+to try using astra"
+
+- Wrote **`docs/handoff-prompt.md`** — a self-contained brief for handing
+  Vantage to another agent/tool with no repo or conversation access. Covers
+  the product thesis and the non-negotiable dynamic-20-game-window framing,
+  the "narrate only what the data supports" rule, the stack and its
+  constraints, every API endpoint used and the payload shapes that matter,
+  the store-and-delta-sync model, the file map, the analysis engine
+  (profile extraction, baseline comparison, flagged moments, quest
+  generation, teaching mode), the current UI, known-good test accounts,
+  everything not yet built, and the five traps already hit — stale rank
+  constants, `[hidden]` losing to class rules, auto-scaled sparklines,
+  double-suffixed unit strings, and burst rate-limiting.
+- Kept it as a repo doc rather than a vault note: an agent needs it to build
+  or modify the code, which is the repo side of the split.
