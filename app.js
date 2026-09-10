@@ -1,11 +1,9 @@
-/* Vantage — glue: input -> account_id -> match history -> per-match /metadata ->
-   analyze -> render. v0+ scope (see README "What does done look like?"). */
-
-const FETCH_CONCURRENCY = 4; // parallel /metadata requests — polite to deadlock-api.com's rate limit
+/* Vantage — glue: input -> account_id -> synced recent-games queue -> analyze
+   -> render. See history.js/store.js for the "store, don't re-poll live"
+   caching layer and queue.js for the hard-capped 20-game window. */
 
 const form = document.getElementById('lookup-form');
 const input = document.getElementById('steam-input');
-const windowInput = document.getElementById('window-input');
 const teachingToggle = document.getElementById('teaching-toggle');
 const statusEl = document.getElementById('status');
 const landingView = document.getElementById('landing');
@@ -27,13 +25,11 @@ form.addEventListener('submit', async (e) => {
     setStatus('Enter a numeric SteamID64 or account id.', true);
     return;
   }
-  const windowSize = clampWindow(Number(windowInput.value));
-  windowInput.value = windowSize;
   const teaching = teachingToggle.checked;
 
   form.querySelector('button').disabled = true;
   try {
-    await runReview(accountId, windowSize, teaching);
+    await runReview(accountId, teaching);
   } catch (err) {
     console.error(err);
     setStatus(`Couldn't load that match: ${err.message}`, true);
@@ -42,66 +38,20 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-function clampWindow(n) {
-  if (!Number.isFinite(n)) return 20;
-  return Math.min(30, Math.max(15, Math.round(n)));
-}
-
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
   statusEl.classList.toggle('error', isError);
 }
 
-/** Runs `tasks` (functions returning promises) with at most `limit` in flight at once,
-    calling `onProgress(doneCount, total)` after each settles. */
-async function runWithConcurrency(tasks, limit, onProgress) {
-  const results = new Array(tasks.length);
-  let nextIndex = 0;
-  let done = 0;
-
-  async function worker() {
-    while (true) {
-      const i = nextIndex++;
-      if (i >= tasks.length) return;
-      try {
-        results[i] = await tasks[i]();
-      } catch (err) {
-        results[i] = null;
-        console.warn('task failed', err);
-      }
-      done++;
-      onProgress?.(done, tasks.length);
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(limit, tasks.length) }, worker);
-  await Promise.all(workers);
-  return results;
-}
-
-async function runReview(accountId, windowSize, teaching) {
-  setStatus('Fetching match history...');
-  const history = await getMatchHistory(accountId);
-  if (!history.length) throw new Error('no matches found for that account');
-
-  // Bounded recent-games memory: never diff against a player's entire history,
-  // only their last `windowSize` games (15-30). See queue.js.
-  const queue = buildRecentGamesQueue(history, windowSize);
-  const currentEntry = queue.mostRecent;
-  const baselineEntries = queue.rest;
-
-  setStatus(`Loading match details (0 of ${queue.size})...`);
-  const tasks = [currentEntry, ...baselineEntries].map((entry) => async () => {
-    const meta = await getMatchMetadata(entry.match_id);
-    return extractProfile(meta, accountId);
+async function runReview(accountId, teaching) {
+  setStatus('Checking for new matches...');
+  const items = await syncMatchHistory(accountId, (done, totalNew) => {
+    setStatus(totalNew === 0 ? 'Up to date — no new matches since last visit.' : `Loading ${done} of ${totalNew} new match${totalNew === 1 ? '' : 'es'}...`);
   });
-  const profiles = await runWithConcurrency(tasks, FETCH_CONCURRENCY, (done, total) =>
-    setStatus(`Loading match details (${done} of ${total})...`)
-  );
 
-  const currentProfile = profiles[0];
+  const currentProfile = items[0]?.profile;
   if (!currentProfile) throw new Error('could not read your data from that match');
-  const baselineProfiles = profiles.slice(1).filter((p) => p !== null);
+  const baselineProfiles = items.slice(1).map((it) => it.profile);
 
   setStatus('Loading hero info...');
   let heroName = `Hero ${currentProfile.heroId}`;
@@ -113,7 +63,7 @@ async function runReview(accountId, windowSize, teaching) {
     console.warn('hero lookup failed', err);
   }
 
-  const baseline = rollingBaseline(baselineProfiles, baselineEntries.length);
+  const baseline = rollingBaseline(baselineProfiles, baselineProfiles.length);
   const comparison = baselineProfiles.length ? compareToBaseline(currentProfile, baseline) : [];
   const itemsBaseline = baseline.metrics.itemsBy10?.n ? baseline.metrics.itemsBy10.median : null;
   const moments = buildFlaggedMoments(currentProfile, itemsBaseline, teaching);
@@ -126,7 +76,7 @@ async function runReview(accountId, windowSize, teaching) {
         tone: 'neutral'
       };
 
-  renderReview({ currentProfile, baselineProfiles, comparison, moments, quest, heroName, windowSize });
+  renderReview({ currentProfile, baselineProfiles, comparison, moments, quest, heroName });
   landingView.hidden = true;
   reviewView.hidden = false;
 }
@@ -137,7 +87,7 @@ function mmss(totalSec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function renderReview({ currentProfile, baselineProfiles, moments, quest, heroName, windowSize }) {
+function renderReview({ currentProfile, baselineProfiles, moments, quest, heroName }) {
   reviewCard.innerHTML = '';
 
   // Header
@@ -153,7 +103,7 @@ function renderReview({ currentProfile, baselineProfiles, moments, quest, heroNa
   const chartCard = document.createElement('div');
   chartCard.className = 'card chart-wrap fade-in';
   chartCard.style.animationDelay = '60ms';
-  chartCard.innerHTML = `<canvas></canvas><p class="chart-caption">vs. your last ${baselineProfiles.length} game${baselineProfiles.length === 1 ? '' : 's'} (of a ${windowSize}-game window)</p>`;
+  chartCard.innerHTML = `<canvas></canvas><p class="chart-caption">vs. your last ${baselineProfiles.length} game${baselineProfiles.length === 1 ? '' : 's'} (of a 20-game window)</p>`;
   reviewCard.appendChild(chartCard);
   const maxMinute = Math.round(currentProfile.durationS / 60);
   const thisSeries = resampleToMinutes(currentProfile.mySoulsSeries, maxMinute);

@@ -9,9 +9,14 @@ rank-cohort benchmarks).
 
 ## What is Vantage?
 
-Not a stats dashboard — a stats *tutor*. Existing tools (Statlocker,
-deadlock-api's own UI components) stop at showing numbers. Vantage's
-differentiator is converting those numbers into prescriptive, per-match
+Not a stats dashboard — a stats *tutor*. Existing trackers (Statlocker,
+deadlock-api's own UI components, Deadlock Tracker/Seance before this)
+compile **all-time** stats into one static career average. Vantage's
+point of interest is different: it's **dynamic** — it stores and morphs
+with your last 20 games specifically, so the picture it shows changes
+game to game and no two days look the same, instead of slowly diluting
+into a lifetime number that stops reacting to how you're playing right
+now. On top of that, it converts the numbers into prescriptive, per-match
 takeaways plus a retention loop of daily quests, the same job chess.com's
 game review does for chess players.
 
@@ -19,8 +24,9 @@ game review does for chess players.
 
 Four-stage pipeline:
 
-1. **Ingest** — poll `deadlock-api.com` for a linked player's match history
-   (no auth needed).
+1. **Ingest** — store a linked player's recent match history locally
+   (`deadlock-api.com` needs no auth), syncing only what's new on each
+   visit rather than re-fetching everything from scratch.
 2. **Analyze** — turn one match into a report: economy curve vs. the
    player's own recent baseline, item-timing flags, lane/kill-participation
    deltas, notable moments. Diffed against the player's own history first —
@@ -140,13 +146,23 @@ See [`docs/api-notes.md`](docs/api-notes.md) for endpoint-level notes on both.
 ## Architecture
 
 1. **Ingest** — [`api.js`](api.js) + [`steamid.js`](steamid.js). Resolves a
-   SteamID64/account id, pulls match history from deadlock-api.com.
-2. **Recent-games memory** — [`queue.js`](queue.js). Vantage never diffs a
-   match against a player's entire history — only a bounded, user-chosen
-   window of their last **15-30 games**, modeled explicitly as a queue
-   (most recent = front; once full, the least recent game is the next one
-   evicted). A wider all-time average would blur who the player is *right
-   now* under years of stale data.
+   SteamID64/account id, pulls the live match-history list from
+   deadlock-api.com (that one light call is unavoidable — it's the only
+   way to know a new match happened).
+2. **Recent-games memory** — [`queue.js`](queue.js) + [`store.js`](store.js)
+   + [`history.js`](history.js). Vantage never diffs a match against a
+   player's entire history — only a **hard-capped window of their last 20
+   games**, modeled explicitly as a queue (most recent = front; once full,
+   the least recent game is the next one evicted). Vantage **stores** this
+   window in the browser (`localStorage`) instead of re-fetching it fresh
+   every visit: `syncMatchHistory()` diffs the live match list against what's
+   cached and only fetches the heavy `/metadata` for genuinely new matches
+   — a returning visitor with no new games makes zero of those calls. This
+   is the actual differentiator from other trackers that compile all-time
+   stats: Vantage's picture morphs game-to-game, so no two days look the
+   same, instead of accumulating into one static career average. Currently
+   local to one browser/device — see PROMPTS.md for the cross-device sync
+   discussion.
 3. **Analyze** — [`analyze.js`](analyze.js), ported from Seance's
    `performance.ts`/`takeaways.ts`. Per-match profile from raw `/metadata`
    (economy curve, item timing, deaths), a rolling baseline over the
@@ -175,8 +191,9 @@ from this repo's `main` branch root via GitHub Pages — no build step, no
 `gh-pages` branch. To run locally instead: `python -m http.server` from
 this directory and open `index.html`.
 
-Not yet done: non-numeric (vanity URL) Steam id input, and Clip Review
-(v1, see PROMPTS.md). No service worker/cache-busting — unlike peak/bloom,
+Not yet done: non-numeric (vanity URL) Steam id input, cross-device sync
+(a Google-login + Firebase design is under discussion, see PROMPTS.md),
+and Clip Review (v1). No service worker/cache-busting — unlike peak/bloom,
 Vantage isn't installable/offline-first, so that part of the original
 "Tech stack" note doesn't apply here.
 

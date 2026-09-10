@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vantage</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <header class="topbar">
@@ -17,11 +17,7 @@
       <form id="lookup-form">
         <label for="steam-input">Steam ID or account ID</label>
         <input id="steam-input" type="text" inputmode="numeric" placeholder="e.g. 186993885" required>
-
-        <div class="form-row">
-          <label for="window-input">Recent games to consider (15&ndash;30)</label>
-          <input id="window-input" type="number" min="15" max="30" value="20">
-        </div>
+        <p class="hint">Compares against your last 20 games, cached on this device — later visits only fetch what's new.</p>
 
         <label class="toggle-row">
           <input id="teaching-toggle" type="checkbox">
@@ -39,11 +35,13 @@
     </section>
   </main>
 
-  <script src="steamid.js?v=4"></script>
-  <script src="api.js?v=4"></script>
-  <script src="queue.js?v=4"></script>
-  <script src="analyze.js?v=4"></script>
-  <script src="charts.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="steamid.js?v=5"></script>
+  <script src="api.js?v=5"></script>
+  <script src="queue.js?v=5"></script>
+  <script src="store.js?v=5"></script>
+  <script src="history.js?v=5"></script>
+  <script src="analyze.js?v=5"></script>
+  <script src="charts.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

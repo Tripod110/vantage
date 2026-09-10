@@ -283,3 +283,59 @@ recent is the first."
   flagged in the earlier improvement list, now actually fixed rather than
   just noted. Verified both fixes live (teaching mode on/off, 20- and
   30-game windows) before committing.
+
+**Prompt:** "First and foremost, I think our ideas of what vantage is
+supposed to be are crossed... Vantage isn't supposed to poll live, it
+should store match history... its point of interest is the dynamics of
+it. It morphs to your recent match history so no two days are the same.
+I think a 20 game limit should be hardcapped."
+
+- Real correction, not a small tweak: the 15-30 configurable window was
+  wrong on two counts — it should be a **hard 20, no more no less**, and
+  the whole "fetch live every visit, keep nothing" model was backwards.
+  Vantage's actual differentiator (vs. Statlocker/Deadlock Tracker/Seance,
+  which all compile all-time stats into one static career average) is that
+  it's **dynamic** — a stored, morphing 20-game window that changes
+  game-to-game, not a fresh live pull with no memory.
+- Asked to confirm what "store, don't poll live" meant precisely before
+  rebuilding (persistent local cache vs. a real backend that polls
+  independently) — user asked which option scales better. Recommended the
+  local cache: a backend polling on every tracked user's behalf, forever,
+  is exactly the operational burden that forced Deadlock Tracker's rewrite
+  into Seance, whereas a client-side cache costs nothing extra per user
+  since each browser does its own delta-sync against the free public API.
+- **Rebuilt accordingly**: `queue.js` hard-caps at `RECENT_GAMES_CAP = 20`
+  (no longer configurable). New **`store.js`** (localStorage, `vantage:`
+  prefix, mirrors peak's `Store` pattern). New **`history.js`** —
+  `syncMatchHistory()` diffs the live match-history list against the
+  cached queue and only fetches `/metadata` for matches not already
+  cached, so a returning visitor with no new games makes zero heavy API
+  calls. Removed the window-size input from the UI entirely. Verified live:
+  first lookup did a full 20-match fetch and cached 33KB; a second lookup
+  for the same account (no new matches played) reused all 20 cached
+  profiles and rendered in ~3s instead of the original ~10s+, confirming
+  the delta-sync path actually skips re-fetching. Updated README's "What is
+  Vantage?" to state the dynamic-window differentiator explicitly instead
+  of leaving it implicit.
+
+**Prompt:** "could we tie it to a google login so the data is synchronized
+across devices?"
+
+- Confirmed feasible without violating the zero-backend/zero-maintenance
+  stack decision: **peak already has this exact architecture** —
+  `firebase-config.js` + `sync.js`, Firebase Auth (magic-link email there;
+  Google Sign-In is a drop-in different provider on the same SDK) +
+  Firestore, gated behind an opt-in toggle, security rules restricting each
+  user to their own document. Firebase is Google's managed backend, not a
+  server the user has to run/maintain, so it doesn't reopen the earlier
+  "real backend" tradeoff.
+- One real constraint flagged: creating the Firebase project and enabling
+  the Google Sign-In provider has to happen in the Firebase Console under
+  the user's own Google account — an account-creation/OAuth step Claude
+  cannot perform on the user's behalf. Firebase CLI isn't installed on
+  this machine either (checked: `firebase: command not found`). Plan:
+  local cache stays the source of truth (as just built); cloud sync would
+  be an optional layer on top, same two-layer shape as peak. Not yet
+  built — next step is the user completing the Firebase Console setup and
+  handing over the resulting (non-secret) config, same as peak's
+  `firebase-config.js` REPLACE_ME pattern.

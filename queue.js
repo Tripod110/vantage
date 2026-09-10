@@ -1,13 +1,16 @@
 /* Vantage — bounded recent-games memory, modeled explicitly as a queue.
    Vantage never diffs a match against a player's ENTIRE history (that
    erases who they are right now behind years of stale data) — only
-   against a fixed recent window (15-30 games, user-configurable). The
-   most recent game is always the front; once the window is full, the
-   least recent game is the next one out. */
+   against a hard-capped window of their last 20 games, no more, no less.
+   The most recent game is always the front; once the window is full, the
+   least recent game is the next one out. This queue is what gets persisted
+   (see store.js) so day-to-day play morphs the window instead of Vantage
+   re-fetching a player's whole history from scratch on every visit. */
+
+const RECENT_GAMES_CAP = 20;
 
 class RecentGamesQueue {
-  constructor(capacity) {
-    if (capacity < 15 || capacity > 30) throw new Error('recent-games window must be between 15 and 30');
+  constructor(capacity = RECENT_GAMES_CAP) {
     this.capacity = capacity;
     this.items = []; // index 0 = most recent (front); last index = least recent (back)
   }
@@ -43,11 +46,11 @@ class RecentGamesQueue {
 }
 
 /** Builds a queue from match-history entries (must already be sorted newest-first),
-    capped to `capacity`. Enqueues oldest-to-newest so the newest ends up at the front,
-    matching how the games actually arrived. */
-function buildRecentGamesQueue(newestFirstEntries, capacity) {
-  const queue = new RecentGamesQueue(capacity);
-  const windowed = newestFirstEntries.slice(0, capacity);
+    capped to RECENT_GAMES_CAP. Enqueues oldest-to-newest so the newest ends up at the
+    front, matching how the games actually arrived. */
+function buildRecentGamesQueue(newestFirstEntries) {
+  const queue = new RecentGamesQueue();
+  const windowed = newestFirstEntries.slice(0, RECENT_GAMES_CAP);
   for (const entry of [...windowed].reverse()) queue.enqueue(entry);
   return queue;
 }
