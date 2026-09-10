@@ -156,7 +156,11 @@ function averageSoulsCurve(profiles, maxMinute) {
 
 const METRICS = [
   { key: 'soulsPerMin12', label: 'Souls/min by 12 min', get: (p) => p.soulsPerMin12, higherIsBetter: 1, unit: 'souls/min' },
-  { key: 'soulsVsLobby10', label: 'Souls vs lobby avg at 10 min', get: (p) => p.soulsVsLobby10, higherIsBetter: 1, unit: 'souls' },
+  // `scale`: soulsVsLobby10 can cross zero, so its baseline median can sit near 0 — dividing by
+  // |base| (as every other metric does) then blows up into nonsense percentages (900% swings from
+  // a $5 baseline, so to speak). Measure it against a fixed reference instead: 600 Souls, the same
+  // "counts as a notable gap" band Seance's feltVsActual.ts uses for this exact metric.
+  { key: 'soulsVsLobby10', label: 'Souls vs lobby avg at 10 min', get: (p) => p.soulsVsLobby10, higherIsBetter: 1, unit: 'souls', scale: 600 },
   { key: 'csPct12', label: 'Last-hit efficiency at 12 min', get: (p) => p.csPct12, higherIsBetter: 1, unit: '%' },
   { key: 'deathsBy10', label: 'Deaths by 10 min', get: (p) => p.deathsBy10, higherIsBetter: -1 },
   { key: 'kda', label: 'KDA', get: (p) => p.kda, higherIsBetter: 1 },
@@ -193,10 +197,16 @@ function compareToBaseline(profile, baseline, typicalBand = 0.1) {
     const base = baseline.metrics[def.key]?.median ?? 0;
     let deltaPct = null;
     let standing = 'typical';
-    if (value !== null && base !== 0) {
-      deltaPct = (100 * (value - base)) / Math.abs(base);
-      const rel = (value - base) / Math.abs(base);
-      if (Math.abs(rel) <= typicalBand) standing = 'typical';
+    // `scale` metrics measure against a fixed reference instead of |base| — see the comment on
+    // soulsVsLobby10 above: a near-zero baseline makes percent-of-baseline meaningless.
+    const canMeasure = value !== null && (def.scale ? true : base !== 0);
+    if (canMeasure) {
+      const rel = def.scale ? (value - base) / def.scale : (value - base) / Math.abs(base);
+      deltaPct = 100 * rel;
+      // A `scale` metric's rel is "how many bands off," not a fraction of baseline — 1 band (not
+      // 10%) is the typical/notable line for it.
+      const bandThreshold = def.scale ? 1 : typicalBand;
+      if (Math.abs(rel) <= bandThreshold) standing = 'typical';
       else {
         const better = def.higherIsBetter === 0 ? null : def.higherIsBetter === 1 ? rel > 0 : rel < 0;
         standing = better === null ? (rel > 0 ? 'above' : 'below') : better ? 'above' : 'below';
@@ -246,7 +256,8 @@ function deathCluster(times) {
   return best;
 }
 
-const soulsStr = (n) => `${Math.round(Math.abs(n) / 100) * 100}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' Souls';
+const soulsNum = (n) => `${Math.round(Math.abs(n) / 100) * 100}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const soulsStr = (n) => soulsNum(n) + ' Souls';
 const leadStr = (n) => {
   const r = Math.round(n / 100) * 100;
   if (Math.abs(r) < 200) return 'roughly even';
@@ -254,25 +265,32 @@ const leadStr = (n) => {
 };
 
 /** 1-4 grounded flagged moments for this match: label, tone, and a game-clock timestamp (seconds).
-    `itemsBaseline` (optional) is the baseline's itemsBy10 median, for an item-timing flag. */
-function buildFlaggedMoments(profile, itemsBaseline = null) {
+    `itemsBaseline` (optional) is the baseline's itemsBy10 median, for an item-timing flag.
+    `teaching` (bool) switches to a voice that defines terms inline — same rules, same data,
+    just more context, matching Seance's std/npm two-voice pattern in takeaways.ts. */
+function buildFlaggedMoments(profile, itemsBaseline = null, teaching = false) {
   const out = [];
+  const souls = teaching ? 'Souls (the currency you earn through the match)' : 'Souls';
 
   if (itemsBaseline !== null && itemsBaseline > 0 && profile.itemsBy10 < itemsBaseline - 1) {
     out.push({
       atS: 600,
       tone: 'bad',
-      text: `You'd bought ${profile.itemsBy10} item${profile.itemsBy10 === 1 ? '' : 's'} by the 10-minute mark, vs. your usual ${Math.round(itemsBaseline)} — item timing ran behind your normal pace this game.`
+      text: teaching
+        ? `You'd bought ${profile.itemsBy10} item${profile.itemsBy10 === 1 ? '' : 's'} by the 10-minute mark, vs. your usual ${Math.round(itemsBaseline)}. Buying items (upgrades from the shop, paid for with Souls) later than usual can mean less power right when early fights happen.`
+        : `You'd bought ${profile.itemsBy10} item${profile.itemsBy10 === 1 ? '' : 's'} by the 10-minute mark, vs. your usual ${Math.round(itemsBaseline)} — item timing ran behind your normal pace this game.`
     });
   }
 
   const m = dominantSwing(profile.leadByMinute);
   if (m) {
+    const swungAgainst = m.dir === 'down';
     out.push({
       atS: Math.max(0, m.fromMin * 60 - 30),
-      tone: m.dir === 'down' ? 'bad' : 'good',
-      text:
-        m.dir === 'down'
+      tone: swungAgainst ? 'bad' : 'good',
+      text: teaching
+        ? `Between minute ${m.fromMin} and ${m.toMin}, your team's ${souls} lead over the enemy team went from ${leadStr(m.before)} to ${leadStr(m.after)} — ${swungAgainst ? 'that swing went against you' : 'that swing went your way'}. Big Souls swings like this are usually where a game turns.`
+        : swungAgainst
           ? `Momentum swung against you between minute ${m.fromMin} and ${m.toMin}: the Souls margin went from ${leadStr(m.before)} to ${leadStr(m.after)}.`
           : `Momentum swung your way between minute ${m.fromMin} and ${m.toMin}: the Souls margin went from ${leadStr(m.before)} to ${leadStr(m.after)}.`
     });
@@ -283,15 +301,20 @@ function buildFlaggedMoments(profile, itemsBaseline = null) {
     out.push({
       atS: Math.max(0, cl.fromMin * 60 - 30),
       tone: 'bad',
-      text: `${cl.n} deaths bunched up between minute ${cl.fromMin} and ${cl.toMin} — worth a replay look.`
+      text: teaching
+        ? `You died ${cl.n} times close together between minute ${cl.fromMin} and ${cl.toMin}. The data flags the run but not a reason for it — rewatching that stretch in the replay can show what was happening.`
+        : `${cl.n} deaths bunched up between minute ${cl.fromMin} and ${cl.toMin} — worth a replay look.`
     });
   }
 
   if (profile.soulsVsLobby10 !== null && Math.abs(profile.soulsVsLobby10) >= 600) {
+    const ahead = profile.soulsVsLobby10 > 0;
     out.push({
       atS: 600,
-      tone: profile.soulsVsLobby10 > 0 ? 'good' : 'bad',
-      text: `At the 10-minute mark you were ${soulsStr(profile.soulsVsLobby10)} ${profile.soulsVsLobby10 > 0 ? 'ahead of' : 'behind'} the lobby average.`
+      tone: ahead ? 'good' : 'bad',
+      text: teaching
+        ? `At the 10-minute mark you had ${soulsNum(profile.soulsVsLobby10)} ${ahead ? 'more' : 'fewer'} ${souls} than the average player in this match. That's a rough read on early-game farm and fighting, relative to everyone else in the lobby.`
+        : `At the 10-minute mark you were ${soulsStr(profile.soulsVsLobby10)} ${ahead ? 'ahead of' : 'behind'} the lobby average.`
     });
   }
 
@@ -303,23 +326,57 @@ function buildFlaggedMoments(profile, itemsBaseline = null) {
    Rule-based, from THIS player's own recent matches only — no cohort data
    needed yet (see README's "How will Vantage work?"). */
 
-function buildQuest(comparison) {
+function buildQuest(comparison, teaching = false) {
   const worst = comparison
     .filter((c) => c.standing === 'below' && c.deltaPct !== null)
     .sort((a, b) => a.deltaPct - b.deltaPct)[0];
   if (!worst) {
-    return { text: 'Nothing stood out as below your recent baseline this game — keep doing what you\'re doing.', tone: 'neutral' };
+    return {
+      text: teaching
+        ? 'Nothing in this game fell below your recent average by much — a game like this is exactly what "keep doing what works" looks like.'
+        : "Nothing stood out as below your recent baseline this game — keep doing what you're doing.",
+      tone: 'neutral'
+    };
   }
   const pct = Math.round(Math.abs(worst.deltaPct));
+  // soulsVsLobby10 is measured against a fixed Souls scale (see METRICS), not baseline percent —
+  // show the actual Souls gap instead of a percentage that stops meaning anything near zero.
+  const soulsGap = worst.value !== null ? soulsStr(worst.value - worst.baselineMedian) : '';
   const QUESTS = {
-    soulsPerMin12: `Your Souls/min by 12 minutes was ${pct}% below your recent average — try this next game: land last hits earlier in the lane instead of trading.`,
-    soulsVsLobby10: `You were behind the lobby average on Souls at 10 minutes (${pct}% below your baseline) — try this next game: prioritize farm over fights before the 10-minute mark.`,
-    csPct12: `Last-hit efficiency was ${pct}% below your baseline by 12 minutes — try this next game: focus on creep timing in your next few laning phases.`,
-    deathsBy10: `You died more before 10 minutes than usual — try this next game: play a touch safer in the opening laning phase.`,
-    kda: `KDA was ${pct}% below your recent baseline — try this next game: look for fights you can win instead of even ones.`,
-    damageSharePct: `Your share of team damage was ${pct}% below your baseline — try this next game: stay in fights a beat longer if it's safe to.`,
-    netWorthFinal: `Final net worth was ${pct}% below your recent baseline — try this next game: keep farming between fights instead of standing idle.`,
-    itemsBy10: `You bought fewer items by 10 minutes than usual — try this next game: return to base to shop as soon as you've got enough Souls, rather than waiting.`
+    soulsPerMin12: {
+      std: `Your Souls/min by 12 minutes was ${pct}% below your recent average — try this next game: land last hits earlier in the lane instead of trading.`,
+      npm: `You farmed Souls (the currency for buying items) more slowly than usual by 12 minutes, ${pct}% below your average — try this next game: prioritize landing the killing blow on lane creeps (last-hitting) over trading blows with the enemy.`
+    },
+    soulsVsLobby10: {
+      std: `You were ${soulsGap} behind your usual standing vs. the lobby at 10 minutes — try this next game: prioritize farm over fights before the 10-minute mark.`,
+      npm: `You had ${soulsGap} less than you usually do, compared to the lobby, at the 10-minute mark — try this next game: focus on farming lane creeps before picking fights in the first 10 minutes.`
+    },
+    csPct12: {
+      std: `Last-hit efficiency was ${pct}% below your baseline by 12 minutes — try this next game: focus on creep timing in your next few laning phases.`,
+      npm: `You landed fewer last hits than usual by 12 minutes (last-hitting = getting the killing blow on a creep for Souls) — try this next game: practice timing your attack so it lands right as a creep would die anyway.`
+    },
+    deathsBy10: {
+      std: `You died more before 10 minutes than usual — try this next game: play a touch safer in the opening laning phase.`,
+      npm: `You died more times than usual before the 10-minute mark — try this next game: play a bit more cautiously early on, since an early death sets you behind on Souls for a while.`
+    },
+    kda: {
+      std: `KDA was ${pct}% below your recent baseline — try this next game: look for fights you can win instead of even ones.`,
+      npm: `Your kills+assists vs. deaths ratio (KDA) was ${pct}% below your average — try this next game: look for fights where you and your team clearly outnumber the enemy, instead of even ones.`
+    },
+    damageSharePct: {
+      std: `Your share of team damage was ${pct}% below your baseline — try this next game: stay in fights a beat longer if it's safe to.`,
+      npm: `You dealt a smaller share of your team's total damage than usual — try this next game: stay in fights a moment longer when it's safe, instead of disengaging early.`
+    },
+    netWorthFinal: {
+      std: `Final net worth was ${pct}% below your recent baseline — try this next game: keep farming between fights instead of standing idle.`,
+      npm: `Your final net worth (total Souls earned) was ${pct}% below your average — try this next game: keep farming creeps between fights instead of standing around.`
+    },
+    itemsBy10: {
+      std: `You bought fewer items by 10 minutes than usual — try this next game: return to base to shop as soon as you've got enough Souls, rather than waiting.`,
+      npm: `You bought fewer items (shop upgrades paid for with Souls) by 10 minutes than usual — try this next game: head back to base to shop as soon as you've saved up enough, rather than waiting.`
+    }
   };
-  return { text: QUESTS[worst.key] ?? `${worst.label} was below your recent baseline this game.`, tone: 'quest' };
+  const variant = QUESTS[worst.key];
+  const text = variant ? (teaching ? variant.npm : variant.std) : `${worst.label} was below your recent baseline this game.`;
+  return { text, tone: 'quest' };
 }

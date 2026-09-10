@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vantage</title>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <header class="topbar">
@@ -17,6 +17,17 @@
       <form id="lookup-form">
         <label for="steam-input">Steam ID or account ID</label>
         <input id="steam-input" type="text" inputmode="numeric" placeholder="e.g. 186993885" required>
+
+        <div class="form-row">
+          <label for="window-input">Recent games to consider (15&ndash;30)</label>
+          <input id="window-input" type="number" min="15" max="30" value="20">
+        </div>
+
+        <label class="toggle-row">
+          <input id="teaching-toggle" type="checkbox">
+          <span>Teaching mode &mdash; explain terms as it goes</span>
+        </label>
+
         <button type="submit">Review my last match</button>
       </form>
       <p id="status" class="status"></p>
@@ -28,10 +39,11 @@
     </section>
   </main>
 
-  <script src="steamid.js?v=1"></script>
-  <script src="api.js?v=1"></script>
-  <script src="analyze.js?v=1"></script>
-  <script src="charts.js?v=1"></script>
-  <script src="app.js?v=1"></script>
+  <script src="steamid.js?v=4"></script>
+  <script src="api.js?v=4"></script>
+  <script src="queue.js?v=4"></script>
+  <script src="analyze.js?v=4"></script>
+  <script src="charts.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

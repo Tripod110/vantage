@@ -230,3 +230,56 @@ we declared is complete for now"
   isn't installable/offline-first (it needs a live API call every visit
   regardless), so that piece of the original "Tech stack" section doesn't
   actually apply; revisit only if Vantage ever adds a PWA manifest.
+
+**Prompt:** "HOW CAN WE IMPROVE THE EXISTING APP?" then "/council" (x2:
+"Decide what features are needed" and "what features would be welcome")
+
+- Gave a prioritized gap list (fetch speed, confusing baseline-percentage
+  phrasing, no phrasing rotation, numeric-only input, unstyled visuals, no
+  cache-busting, Clip Review unbuilt). Then ran two council sessions:
+  "needed" surfaced replay-timestamp pointers, an honesty gate on the
+  quest engine (don't overclaim from one match), and warned against
+  repeating the Deadlock Tracker → Seance scope-creep pattern; "welcome"
+  surfaced a teaching-mode voice for newer players (vs. a grinder wanting
+  more density — direct conflict, resolved as "build both via a toggle,
+  don't pick one"), visual polish, and flagged that social/sharing
+  features carry a real privacy cost this app currently has no framework
+  for. Councils are ideation, not committed decisions — nothing was built
+  from them until the next prompt.
+
+**Prompt:** "add the teaching-mode toggle and visual polish pass. allow
+the lookup of only recent games... 15-30... Treat it as a Queue Data
+structure... least recent is the next one out of the queue and the most
+recent is the first."
+
+- **Teaching-mode toggle**: added a std/npm dual-voice to every generated
+  line in `analyze.js` (flagged moments + quest text), same data/rules,
+  npm defines terms inline — directly following Seance's `takeaways.ts`
+  pattern from the earlier reuse audit. Wired a checkbox in `index.html`.
+- **Recent-games queue**: new **`queue.js`** — `RecentGamesQueue`
+  (capacity 15-30, enforced), `enqueue`/`dequeue`, `mostRecent`/`rest`
+  accessors, plus `buildRecentGamesQueue()` to load it from match history.
+  Replaced the old fixed `BASELINE_WINDOW = 8` constant with a user
+  ("Recent games to consider (15-30)") input, default 20. The reviewed
+  match is the queue's front; the rest is the baseline pool — no more
+  diffing against a player's entire history.
+- **Visual polish pass**: Sora/Inter fonts, radial glow background, card
+  shadows + fade-in-on-render animation, gradient button with hover lift,
+  chart caption showing the actual window used, responsive tweaks.
+- **Along the way, parallelized the `/metadata` fetches** (4 concurrent
+  instead of sequential) since a 30-game window would have made the old
+  one-at-a-time fetch loop from the improvement list unacceptably slow —
+  addresses gap #1 from the "how can we improve" answer as a side effect.
+- **Found and fixed two real bugs during live verification** (not
+  hypothetical): (1) teaching-mode text said "900 Souls fewer Souls (the
+  currency...)" — doubled units from concatenating an already-unit-suffixed
+  string with a second unit phrase; split `soulsStr`/`soulsNum` to fix.
+  (2) the quest text read "1069% below your baseline" — `compareToBaseline`
+  divided by the baseline median, and `soulsVsLobby10` can have a
+  near-zero or negative median (it crosses zero), so percent-of-baseline
+  exploded. Fixed by giving that metric a fixed 600-Souls `scale` (matching
+  Seance's `feltVsActual.ts` `PERSONAL_BAND` constant) to measure against
+  instead of its own baseline — this was exactly the "confusing math" gap
+  flagged in the earlier improvement list, now actually fixed rather than
+  just noted. Verified both fixes live (teaching mode on/off, 20- and
+  30-game windows) before committing.

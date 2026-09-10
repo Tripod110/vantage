@@ -1,12 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
+
 :root {
-  --bg: #0d0e12;
-  --panel: #16181f;
+  --bg: #0b0c10;
+  --bg-glow: radial-gradient(1200px 500px at 50% -10%, rgba(240,160,32,0.10), transparent 60%);
+  --panel: #15171e;
+  --panel-hover: #1a1d26;
   --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
   --text: #eceef2;
-  --text-dim: rgba(236,238,242,0.6);
+  --text-dim: rgba(236,238,242,0.62);
+  --text-faint: rgba(236,238,242,0.4);
   --accent: #f0a020;
+  --accent-soft: rgba(240,160,32,0.1);
   --good: #4caf7d;
   --bad: #e05a5a;
+  --shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
 * { box-sizing: border-box; }
@@ -14,23 +22,26 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--bg) var(--bg-glow);
   color: var(--text);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .topbar {
-  padding: 32px 20px 8px;
+  padding: 40px 20px 12px;
   text-align: center;
 }
 .topbar h1 {
   margin: 0;
-  font-size: 28px;
-  letter-spacing: 0.02em;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.01em;
   color: var(--accent);
+  text-shadow: 0 0 30px rgba(240,160,32,0.25);
 }
 .tagline {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--text-dim);
   font-size: 14px;
 }
@@ -44,39 +55,92 @@ body {
 #landing form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 420px;
-  margin: 40px auto 0;
+  gap: 12px;
+  max-width: 440px;
+  margin: 48px auto 0;
 }
 #landing label {
   font-size: 13px;
   color: var(--text-dim);
+  font-weight: 500;
 }
-#landing input {
+#landing input[type="text"],
+#landing input[type="number"] {
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
   font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-#landing button {
-  padding: 12px 14px;
+#landing input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+#landing .form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px;
+}
+#landing .form-row label {
+  margin: 0;
+}
+#landing .form-row input {
+  width: 72px;
+  text-align: center;
+  padding: 8px;
   border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 2px 6px;
+}
+.toggle-row input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+#landing button {
+  padding: 13px 14px;
+  border-radius: 10px;
   border: none;
-  background: var(--accent);
+  background: linear-gradient(180deg, #f5ad30, var(--accent));
   color: #1a1200;
   font-weight: 600;
   font-size: 15px;
+  font-family: inherit;
   cursor: pointer;
+  box-shadow: 0 4px 16px rgba(240,160,32,0.25);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
-#landing button:disabled { opacity: 0.5; cursor: default; }
+#landing button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(240,160,32,0.35);
+}
+#landing button:disabled { opacity: 0.5; cursor: default; transform: none; }
 
 .status {
   text-align: center;
   color: var(--text-dim);
   min-height: 20px;
-  margin-top: 12px;
+  margin-top: 14px;
+  font-size: 14px;
 }
 .status.error { color: var(--bad); }
 
@@ -85,9 +149,12 @@ body {
   border: none;
   color: var(--text-dim);
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
   padding: 0 0 16px;
+  transition: color 0.15s ease;
 }
+.link-btn:hover { color: var(--text); }
 
 #review-card {
   display: flex;
@@ -98,9 +165,28 @@ body {
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 18px 20px;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
 }
+
+.fade-in {
+  animation: fadeInUp 0.4s ease both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-label {
+  margin: 0 0 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+.dim { color: var(--text-dim); margin: 0; font-size: 14px; }
 
 .match-header {
   display: flex;
@@ -109,7 +195,14 @@ body {
 }
 .match-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+}
+.match-header .duration {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
 }
 .result-win { color: var(--good); }
 .result-loss { color: var(--bad); }
@@ -119,35 +212,51 @@ body {
   height: 220px;
   display: block;
 }
+.chart-caption {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: right;
+}
 
 .moment {
   display: flex;
-  gap: 10px;
-  padding: 8px 0;
+  gap: 12px;
+  padding: 10px 0;
   border-top: 1px solid var(--border);
   font-size: 14px;
+  line-height: 1.45;
 }
-.moment:first-child { border-top: none; }
+.moment:first-child { border-top: none; padding-top: 2px; }
 .moment .ts {
   color: var(--text-dim);
-  min-width: 44px;
+  min-width: 46px;
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 .moment.good .ts { color: var(--good); }
 .moment.bad .ts { color: var(--bad); }
 
 .quest-card {
-  border: 1px solid var(--accent);
-  background: rgba(240,160,32,0.08);
+  border: 1px solid rgba(240,160,32,0.35);
+  background: linear-gradient(160deg, rgba(240,160,32,0.10), rgba(240,160,32,0.03));
 }
 .quest-card h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
+  margin: 0 0 10px;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--accent);
+  font-weight: 700;
 }
 .quest-card p {
   margin: 0;
   font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .card { padding: 16px 18px; border-radius: 12px; }
+  .match-header h2 { font-size: 17px; }
 }

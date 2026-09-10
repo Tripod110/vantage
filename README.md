@@ -141,17 +141,29 @@ See [`docs/api-notes.md`](docs/api-notes.md) for endpoint-level notes on both.
 
 1. **Ingest** — [`api.js`](api.js) + [`steamid.js`](steamid.js). Resolves a
    SteamID64/account id, pulls match history from deadlock-api.com.
-2. **Analyze** — [`analyze.js`](analyze.js), ported from Seance's
+2. **Recent-games memory** — [`queue.js`](queue.js). Vantage never diffs a
+   match against a player's entire history — only a bounded, user-chosen
+   window of their last **15-30 games**, modeled explicitly as a queue
+   (most recent = front; once full, the least recent game is the next one
+   evicted). A wider all-time average would blur who the player is *right
+   now* under years of stale data.
+3. **Analyze** — [`analyze.js`](analyze.js), ported from Seance's
    `performance.ts`/`takeaways.ts`. Per-match profile from raw `/metadata`
    (economy curve, item timing, deaths), a rolling baseline over the
-   player's recent matches, and grounded flagged moments (momentum swings,
-   death clusters, item-timing, lobby comparison).
-3. **Quest engine** — `buildQuest()` in `analyze.js`: one rule-based "try
+   recent-games queue, and grounded flagged moments (momentum swings, death
+   clusters, item-timing, lobby comparison). Every metric that can cross
+   zero (e.g. Souls vs. lobby average, which can be negative) is measured
+   against a fixed Souls scale rather than baseline percentage — dividing
+   by a near-zero baseline was producing nonsense (1000%+) swings.
+4. **Quest engine** — `buildQuest()` in `analyze.js`: one rule-based "try
    this next game" line from whichever baseline metric this match fell
    furthest below. Rank-cohort benchmark quests are still future work.
-4. **Review UI** — [`index.html`](index.html) / [`app.js`](app.js) /
+5. **Review UI** — [`index.html`](index.html) / [`app.js`](app.js) /
    [`charts.js`](charts.js) / [`style.css`](style.css): single-match report
    card with a canvas economy-curve chart, flagged moments, and the quest.
+   A **teaching-mode toggle** switches every generated line to a voice that
+   defines terms inline (Seance's std/npm two-voice pattern) — same data,
+   same rules, more context for a newer player.
 
 ## Status
 
