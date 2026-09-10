@@ -425,3 +425,22 @@ actual app dashboard? Could we generate some mockups of ideas you have?"
 - The ~2.6MB seeded canvas file is gitignored; the artboards, canvas.json
   and images in `design/` are the source of truth and re-seed from any
   machine.
+
+**Prompt:** "I'm between A and D"
+
+- Observed that A and D aren't actually competing — A answers "what does my
+  form look like right now", D answers "what just happened and what do I do
+  about it" — so drafted a fifth artboard, **`Hybrid.dc.html`
+  ("A+D · Window as selector")**, rather than asking the user to pick
+  between them. The 20-tile strip becomes the SELECTOR and the spotlight
+  card becomes the DETAIL PANE: the highlighted tile is the game showing
+  below (tied together with a notch), and clicking any other tile swaps the
+  pane. That makes the match list a control rather than a list, which is
+  the master-detail pattern that reads as an app.
+- Tradeoff recorded on the canvas: the detail pane commits a lot of
+  vertical space to one game and overlaps today's Review tab — if this
+  direction wins, Review has to become the genuinely deeper surface
+  (replay timestamps, full metric table vs. baseline) instead of a larger
+  version of the same card.
+- Measured the artboard's natural height (579px) before placing it, same
+  as the other four. A/B/C/D keep their original identities and positions.

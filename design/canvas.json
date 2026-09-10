@@ -1,5 +1,6 @@
 {
   "artboards": [
+    { "file": "Hybrid.dc.html", "title": "A+D · Window as selector", "x": 620, "y": -920, "w": 1120, "h": 620 },
     { "file": "Main.dc.html", "title": "A · Form strip", "x": 0, "y": 0, "w": 1120, "h": 650 },
     { "file": "Coach.dc.html", "title": "B · Coach-first", "x": 1240, "y": 0, "w": 1120, "h": 710 },
     { "file": "CommandCenter.dc.html", "title": "C · Command center", "x": 0, "y": 1000, "w": 1120, "h": 900 },
@@ -37,9 +38,16 @@
     {
       "id": "note-intro",
       "x": 620,
-      "y": -300,
+      "y": -1240,
       "w": 620,
-      "text": "Four answers to the same question: where do the matches go?\nAll four use Vantage's real tokens (Sora/Inter, #0b0c10 ground, #f0a020 accent) and your real data from the last 20 games.\nStatic mockups — nothing clickable yet."
+      "text": "Answers to one question: where do the matches go?\nAll use Vantage's real tokens (Sora/Inter, #0b0c10 ground, #f0a020 accent) and your real data from the last 20 games.\nStatic mockups — nothing clickable yet."
+    },
+    {
+      "id": "note-hybrid",
+      "x": 620,
+      "y": -1090,
+      "w": 700,
+      "text": "A+D · WINDOW AS SELECTOR — drafted because you were torn between A and D\nThey aren't competing: A answers \"what does my form look like\", D answers \"what just happened and what do I do\". Here the strip is the SELECTOR and the card below is the DETAIL PANE — the highlighted tile is the game showing underneath, and clicking any other tile swaps it. Master-detail, which is the pattern that actually reads as an app.\n\nTradeoff: the detail pane is a big commitment of vertical space to one game, and it overlaps what the Review tab shows — Review would need to become the deeper surface (replay timestamps, full metric table) rather than a bigger version of this."
     }
   ],
   "launch": { "view": "canvas" }
