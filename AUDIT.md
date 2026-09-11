@@ -33,8 +33,13 @@ Local fixture server only; no live account was submitted.
 - Team damage share had no favorable/unfavorable class. Death and recent-match labels used singular/plural forms correctly.
 - Final clean fixture load reported no console errors.
 
-## Release boundary
+## Release
 
-The existing Site remains owner-only (`custom` access with only the owner) and is still on published version 1. This task updated the local checkout only; it did not commit, push, save a Site version, or deploy because the request did not explicitly authorize publishing an update to the existing Site.
+- Full audited source and evidence: `codex/vantage-release` branch.
+- GitHub Pages artifact: commit `e24b72631f3d900c0f89cee43fa2a90910a858c7` on the `gh-pages` branch.
+- GitHub Pages source changed from `main` at `/` to `gh-pages` at `/`, preserving the existing `main` branch and its history.
+- GitHub reported Pages build `1208985530` as `built` with no error, and `https://tripod110.github.io/vantage/` returned HTTP 200 with the version 3 assets and Vantage page content.
+
+The separate owner-only OpenAI Site was not changed by this GitHub Pages publication.
 
 A fresh live-account test remains unverified. Account `186993885` was not sent to `api.deadlock-api.com`; that transmission requires the user's explicit authorization. The app's live integration therefore remains subject to the external API, CORS, and hosted asset availability.
