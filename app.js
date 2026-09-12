@@ -117,7 +117,7 @@ el.form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const accountId = toAccountId(el.input.value);
   if (accountId === null) {
-    setStatus('Enter a numeric SteamID64 or account id.', true);
+    setStatus('Enter an account ID, SteamID64, or steamcommunity.com/profiles/ link. Custom /id/ links need a numeric SteamID64 instead.', true);
     return;
   }
   State.accountId = accountId;

@@ -5,15 +5,29 @@
 
 const ACCOUNT_ID_BASE = 76561197960265728n;
 
-/** Accepts a SteamID64 or an already-32-bit account id and returns the account id,
-    or null if the input isn't a positive integer. */
+/** Accepts an account ID, SteamID64, or numeric Steam profile URL.
+    Reject unrelated URLs and values outside the unsigned 32-bit account range. */
 function toAccountId(raw) {
   if (raw === null || raw === undefined) return null;
-  const s = String(raw).trim();
+  let s = String(raw).trim();
+  if (!/^\d+$/.test(s)) {
+    try {
+      const url = new URL(/^(?:www\.)?steamcommunity\.com\//i.test(s) ? `https://${s}` : s);
+      if (!['https:', 'http:'].includes(url.protocol) ||
+          !['steamcommunity.com', 'www.steamcommunity.com'].includes(url.hostname) ||
+          url.username || url.password || url.port) return null;
+      const match = url.pathname.match(/^\/profiles\/(\d{17})\/?$/);
+      if (!match) return null;
+      s = match[1];
+    } catch {
+      return null;
+    }
+  }
   if (!/^\d+$/.test(s)) return null;
   const n = BigInt(s);
   if (n <= 0n) return null;
   const acc = n >= ACCOUNT_ID_BASE ? n - ACCOUNT_ID_BASE : n;
+  if (acc <= 0n || acc > 4294967295n) return null;
   return Number(acc);
 }
 

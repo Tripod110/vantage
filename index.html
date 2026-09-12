@@ -23,8 +23,9 @@
     <!-- First run: who are you? -->
     <section id="landing" class="view" hidden>
       <form id="lookup-form">
-        <label for="steam-input">Steam ID or account ID</label>
-        <input id="steam-input" type="text" inputmode="numeric" placeholder="e.g. 186993885" required>
+        <label for="steam-input">Steam profile link or account ID</label>
+        <input id="steam-input" type="text" autocapitalize="none" spellcheck="false" placeholder="https://steamcommunity.com/profiles/..." aria-describedby="steam-input-help" required>
+        <p id="steam-input-help" class="hint">Paste a numeric Steam profile link, SteamID64, or account ID. Custom /id/ links are not supported yet.</p>
         <p class="hint">Vantage keeps your last 20 games on this device and only fetches what's new after that.</p>
         <label class="toggle-row">
           <input id="teaching-toggle" type="checkbox">
@@ -44,7 +45,7 @@
     <p id="status" class="status"></p>
   </main>
 
-  <script src="steamid.js?v=6"></script>
+  <script src="steamid.js?v=7"></script>
   <script src="api.js?v=6"></script>
   <script src="queue.js?v=6"></script>
   <script src="store.js?v=6"></script>
@@ -53,6 +54,6 @@
   <script src="analyze.js?v=6"></script>
   <script src="charts.js?v=6"></script>
   <script src="dashboard.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
