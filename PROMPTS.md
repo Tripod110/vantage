@@ -568,3 +568,20 @@ list other potential ideas..."
   (`death_pos`), nemesis patterns, objective discipline, per-hero loading
   phase, predict-then-watch drill, tag trends, weekly digest, queue-partner
   stats (privacy call), sync, Clip Review, Statlocker, other games.
+
+**Prompt:** "is it live? I don't see any of the new changes."
+
+- It wasn't, and not because of a slow build. On 2026-09-10/11 a Codex/Astra
+  session built a separate app, "Vantage — Match desk" (`engine.js`,
+  `heroes.json`, demo-data mode), in an **unrelated git history** on
+  `codex/vantage-release`, published it to a `gh-pages` branch, and switched
+  GitHub Pages to serve `gh-pages`. Every push to `main` after that deployed
+  nothing visible.
+- Owner chose to serve `main`. Pages source set back to `main` /, a rebuild
+  requested (changing the source alone didn't trigger one), and the live site
+  verified serving `v=8` with the new homepage and no console errors.
+- The Match desk is untouched and recoverable: `gh-pages` and
+  `codex/vantage-release` still exist on origin. Switching back is a single
+  Pages source change.
+- Lesson: before saying "deployed", check what Pages is actually serving
+  (`gh api repos/Tripod110/vantage/pages`), not just that `main` was pushed.
