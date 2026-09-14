@@ -146,80 +146,58 @@ See [`docs/api-notes.md`](docs/api-notes.md) for endpoint-level notes on both.
 ## Architecture
 
 1. **Ingest** — [`api.js`](api.js) + [`steamid.js`](steamid.js). Resolves a
-   SteamID64/account id, pulls the live match-history list from
-   deadlock-api.com (that one light call is unavoidable — it's the only
-   way to know a new match happened).
-2. **Recent-games memory** — [`queue.js`](queue.js) + [`store.js`](store.js)
-   + [`history.js`](history.js). Vantage never diffs a match against a
-   player's entire history — only a **hard-capped window of their last 20
-   games**, modeled explicitly as a queue (most recent = front; once full,
-   the least recent game is the next one evicted). Vantage **stores** this
-   window in the browser (`localStorage`) instead of re-fetching it fresh
-   every visit: `syncMatchHistory()` diffs the live match list against what's
-   cached and only fetches the heavy `/metadata` for genuinely new matches
-   — a returning visitor with no new games makes zero of those calls. This
-   is the actual differentiator from other trackers that compile all-time
-   stats: Vantage's picture morphs game-to-game, so no two days look the
-   same, instead of accumulating into one static career average. Currently
-   local to one browser/device — see PROMPTS.md for the cross-device sync
-   discussion.
-3. **Analyze** — [`analyze.js`](analyze.js), ported from Seance's
-   `performance.ts`/`takeaways.ts`. Per-match profile from raw `/metadata`
-   (economy curve, item timing, deaths), a rolling baseline over the
-   recent-games queue, and grounded flagged moments (momentum swings, death
-   clusters, item-timing, lobby comparison). Every metric that can cross
-   zero (e.g. Souls vs. lobby average, which can be negative) is measured
-   against a fixed Souls scale rather than baseline percentage — dividing
-   by a near-zero baseline was producing nonsense (1000%+) swings.
-4. **Quest engine** — `buildQuest()` in `analyze.js`: one rule-based "try
-   this next game" line from whichever baseline metric this match fell
-   furthest below. Rank-cohort benchmark quests are still future work.
-5. **Catalogs** — [`assets.js`](assets.js). Hero and rank catalogs from
-   `/v1/assets/*`, cached on disk for a week. Rank *names* are deliberately
-   not hard-coded: the list ported from Deadlock Tracker was already stale
-   against live data (Alchemist/Arcanist/Ritualist/Archon where the API now
-   returns Acolyte/Sentinel/Mystic and no Archon), which would have
-   mislabelled every badge.
-6. **Dashboard** — [`dashboard.js`](dashboard.js). The hub: Steam identity
-   (avatar, persona, current rank badge + est. score), form across the
-   window (record, win rate, KDA, souls/min), a rank-score trend sparkline,
-   and the 20 matches themselves. Every match row opens that match's review
-   — the review is no longer hard-wired to "most recent".
-7. **Review UI** — [`index.html`](index.html) / [`app.js`](app.js) /
-   [`charts.js`](charts.js) / [`style.css`](style.css): single-match report
-   card with a canvas economy-curve chart, flagged moments, and the quest.
-   Baseline for a reviewed match is the *other* 19 games in the window, so a
-   match is never compared against itself. A **teaching-mode toggle**
-   switches every generated line to a voice that defines terms inline
-   (Seance's std/npm two-voice pattern) — same data, same rules, more
-   context for a newer player.
+   SteamID64/account id/profile link and pulls the live match-history list
+   (the one light call needed to know a new match happened).
+2. **Ranked window** — [`queue.js`](queue.js) + [`store.js`](store.js) +
+   [`history.js`](history.js). A hard-capped window of the player's last 20
+   **ranked** games (`match_mode 4`), stored in `localStorage` and
+   delta-synced: `/metadata` is only fetched for matches not already cached
+   at the current `PROFILE_VERSION`. Other modes are kept as light entries
+   for sessions but never enter baselines — mixing modes had been
+   contaminating every number (8–12 overall was 5–10 in ranked).
+3. **Analyze** — [`analyze.js`](analyze.js). Per-match profile from
+   `/metadata` (deaths, deaths by 10, Souls lost to deaths, Souls vs lobby at
+   10, Souls/min, trooper damage by 20, items by 10, accuracy, economy
+   curve), grounded flagged moments, and `separators()`: wins vs losses per
+   metric with sample sizes, refusing to compare below 3 of each. This
+   replaced "furthest from your median", because the median of a losing
+   stretch is a losing standard.
+4. **Sessions** — [`sessions.js`](sessions.js). Matches under an hour apart
+   form a session; reports the early half vs late half of a session and
+   recent load (games today, hours this week). Facts only, no advice.
+5. **Goals and accountability** — [`goals.js`](goals.js). One yes/no goal
+   at a time, with its threshold derived from the player's winning games.
+   Before a session the player picks it; after each ranked game they grade
+   themselves *before* seeing the data, and Vantage scores how often their
+   read matched. Hit 8 of the last 10 → learned; learned goals keep being
+   checked and are flagged when they slip. Also reports ranked games played
+   without a session goal, and rank-score trend (slope ported from Seance
+   `goal.ts`).
+6. **Catalogs** — [`assets.js`](assets.js). Hero and rank catalogs, cached a
+   week. Rank names are never hard-coded (a ported list was already stale).
+7. **Homepage** — [`dashboard.js`](dashboard.js): Recently → your goal and
+   pending self-grades → what separates your wins from losses → the window
+   as a 20-tile selector with a detail pane. Rank is deliberately small.
+8. **Review** — [`app.js`](app.js) / [`charts.js`](charts.js): this game's
+   numbers next to your winning and losing averages (labelled only where the
+   two actually differ), your goal verdict, economy curve and flagged
+   moments. Teaching mode rewrites generated lines with terms defined.
 
-`app.js` is the shell: it remembers whose page this is, paints the
-dashboard from cache before the network sync finishes, and routes between
-the two tabs.
+`app.js` is the shell: it owns goal/session state, paints from cache before
+syncing, and routes between Dashboard and Review. Tests:
+`node --test tests/*.test.cjs`.
 
 ## Status
 
-**Live** at https://tripod110.github.io/vantage/, verified against
-`api.deadlock-api.com` with no backend. Enter a SteamID64/account id once
-and it's remembered; after that you land on a dashboard of your last 20
-games, and any match opens its own review. Deployed straight from this
-repo's `main` branch root via GitHub Pages — no build step, no `gh-pages`
-branch. To run locally: `python -m http.server` from this directory.
+**Live** at https://tripod110.github.io/vantage/, no backend, deployed
+straight from `main` via GitHub Pages. Run locally with
+`python -m http.server` from this directory.
 
-**In flight:** the dashboard's match list reads as a table rather than an
-app surface, so four redesign directions are up for a decision — see
-`design/` for the artboard sources (`Main`/`Coach`/`CommandCenter`/
-`Spotlight`, laid out by `canvas.json`) and PROMPTS.md for what each one
-trades off. Nothing is wired into the app yet.
-
-Not yet done: **Statlocker rank** (blocked — their API needs a
-manually-approved key, no self-serve signup; see `docs/api-notes.md`),
-non-numeric (vanity URL) Steam id input, cross-device sync (a Google-login
-+ Firebase design is under discussion, see PROMPTS.md), and Clip Review.
-No service worker/cache-busting — unlike peak/bloom, Vantage isn't
-installable/offline-first, so that part of the original "Tech stack" note
-doesn't apply here.
+Not yet done: **Statlocker rank** (blocked on a manually-approved key),
+custom `/id/` Steam links, cross-device sync (Firebase design discussed),
+Clip Review, and the later ideas listed in PROMPTS.md (replay links,
+execution vs understanding profile, lobby-rank context, death map, tag
+trends, weekly digest).
 
 See [`PROMPTS.md`](PROMPTS.md) for the running decision log.
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vantage</title>
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="topbar">
@@ -26,7 +26,7 @@
         <label for="steam-input">Steam profile link or account ID</label>
         <input id="steam-input" type="text" autocapitalize="none" spellcheck="false" placeholder="https://steamcommunity.com/profiles/..." aria-describedby="steam-input-help" required>
         <p id="steam-input-help" class="hint">Paste a numeric Steam profile link, SteamID64, or account ID. Custom /id/ links are not supported yet.</p>
-        <p class="hint">Vantage keeps your last 20 games on this device and only fetches what's new after that.</p>
+        <p class="hint">Vantage keeps your last 20 ranked games on this device and only fetches what's new after that.</p>
         <label class="toggle-row">
           <input id="teaching-toggle" type="checkbox">
           <span>Teaching mode &mdash; explain terms as it goes</span>
@@ -45,15 +45,17 @@
     <p id="status" class="status"></p>
   </main>
 
-  <script src="steamid.js?v=7"></script>
-  <script src="api.js?v=6"></script>
-  <script src="queue.js?v=6"></script>
-  <script src="store.js?v=6"></script>
-  <script src="assets.js?v=6"></script>
-  <script src="history.js?v=6"></script>
-  <script src="analyze.js?v=6"></script>
-  <script src="charts.js?v=6"></script>
-  <script src="dashboard.js?v=6"></script>
-  <script src="app.js?v=7"></script>
+  <script src="steamid.js?v=8"></script>
+  <script src="api.js?v=8"></script>
+  <script src="queue.js?v=8"></script>
+  <script src="store.js?v=8"></script>
+  <script src="assets.js?v=8"></script>
+  <script src="history.js?v=8"></script>
+  <script src="analyze.js?v=8"></script>
+  <script src="sessions.js?v=8"></script>
+  <script src="goals.js?v=8"></script>
+  <script src="charts.js?v=8"></script>
+  <script src="dashboard.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

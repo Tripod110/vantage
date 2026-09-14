@@ -510,3 +510,61 @@ in this next pass of vantage?"
   timestamp, regular queue partners (a privacy call), homepage visual
   references, other coaches' frameworks.
 - API field and game-mode research stays with Claude. No code changed.
+
+**Prompt:** "the next iteration of vantage. While planning ask yourself: What
+is vantage already good at? What can it be better at? Based on the video how
+can we improve what we have already built? ... How can we construct vantage so
+the player is actually playing meaningful matches rather than just queuing and
+getting angry? Self critiquing is a big part of improvement. How can we
+implement some sort of accountability factor into vantage? Please describe and
+list other potential ideas..."
+
+- Planned first (plan approved). Owner's decisions: stop signal = **facts
+  only** (no "take a break" copy); accountability = **pre-session goal +
+  post-game self-grade**; rank = **demoted**; scope = **core loop**.
+- **Ranked-only window.** Confirmed `match_mode 4` is ranked (metadata
+  `ranked_type 1`); the window now holds only those, bots/unscored dropped.
+  Added `PROFILE_VERSION` so stale cached profiles re-fetch. Verified the
+  window against a direct API computation: 5–15, identical match ids.
+- **New metrics** from `/metadata`: trooper damage by 20
+  (`creep_damage`), Souls lost to deaths (`gold_death_loss`), accuracy
+  (`shots_hit`/`shots_missed`).
+- **Retired** `buildQuest`, `compareToBaseline` and the sparkline. Replaced
+  median-based selection with `separators()` (wins vs losses per metric,
+  pooled-SD effect size ≥ 0.5, sample sizes shown, refuses under 3 per side).
+- **Correction to an earlier claim:** the "0–10 when behind at 10 minutes"
+  figure quoted on 2026-09-11 came from the mixed-mode window. In ranked-only
+  data it's 3–9 behind vs 2–6 even/ahead — no clear separation. Deaths are
+  the real separator for this player (wins 3.6, losses 8.2). The app now
+  shows the honest split rather than the earlier one.
+- **Sessions** (`sessions.js`): games under 60 minutes apart; early vs late
+  half of a session; games today, hours this week, longest session.
+- **Goal loop** (`goals.js`): yes/no goals with thresholds from winning
+  games (defaults when wins < 3); pick one to start a session; self-grade
+  each ranked game (hit/miss + tags + note) before the verdict; self-read
+  accuracy; learned at 8 of last 10; learned goals flagged when slipping;
+  "N of your last 10 ranked games were played without a session goal";
+  rank-score slope ported from Seance `goal.ts`.
+- **Homepage** rebuilt: Recently → goal/grading → what separates your wins
+  from losses → A+D window selector with detail pane. **Review** now compares
+  the game to winning and losing averages, labelling "closer to" only where
+  the metric actually separates (it first labelled 79% vs 81% last-hit
+  efficiency — noise — and was fixed during verification).
+- **Security fix found in passing:** Steam persona names, hero names and
+  notes were interpolated into `innerHTML` unescaped; persona names are
+  user-controlled on Steam. Everything external now goes through `esc()`;
+  verified with a `<b>` note rendering as literal text.
+- Tests: `tests/load.cjs` shared vm loader; `sessions`, `goals`,
+  `separators` suites added — 18 passing with the existing steamid tests.
+  (`node --test tests/` fails on Windows; use `node --test tests/*.test.cjs`.)
+- Verified live on localhost: cache refetch, window numbers, goal adoption,
+  simulated session with two games graded (one deliberately wrong to check
+  the honesty mismatch), persistence across reload, review table, 375px
+  mobile with no horizontal scroll. Simulated goal/session data cleared
+  afterwards.
+- CREDITS.md: Deathy entry flipped to partly implemented.
+- Later ideas recorded in the plan: replay links, execution vs understanding
+  profile, lobby-rank context via `average_badge_team0/1`, death map
+  (`death_pos`), nemesis patterns, objective discipline, per-hero loading
+  phase, predict-then-watch drill, tag trends, weekly digest, queue-partner
+  stats (privacy call), sync, Clip Review, Statlocker, other games.

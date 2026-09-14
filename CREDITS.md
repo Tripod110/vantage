@@ -40,7 +40,14 @@ by Valve.
     describes this as a made-up heuristic, not a measured statistic, and
     Vantage must present it that way if it's ever used.
   - Around 55% sustained win rate as a strong result.
-- **Status:** informing design. Not yet implemented.
+- **Status:** partly implemented (2026-09-14):
+  - **Shipped** — measurable yes/no goals judged independently of the
+    result (`goals.js`); rank demoted from the headline; a goal log that
+    marks goals learned and keeps re-checking them for slipping; per-game
+    self-grading as practice at identifying your own mistakes.
+  - **Not yet** — the loading phase, the execution vs. understanding split,
+    the full regression timeline, the 40/40/20 heuristic, and the 55%
+    benchmark.
 
 ### Chess.com Game Review
 - **Source:** https://www.chess.com

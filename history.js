@@ -8,6 +8,11 @@
 
 const HISTORY_FETCH_CONCURRENCY = 4;
 
+/* The window only ever holds games of this mode. Mixing modes contaminated every
+   baseline (8–12 overall was 5–10 in ranked). Deadlock's match_mode 4 is ranked
+   (metadata ranked_type 1). Other modes still feed sessions, never the analysis. */
+const ANALYSIS_MATCH_MODE = 4;
+
 /** Runs `tasks` (functions returning promises) with at most `limit` in flight at once. */
 async function runWithConcurrency(tasks, limit) {
   const results = new Array(tasks.length);
@@ -31,18 +36,23 @@ async function runWithConcurrency(tasks, limit) {
   return results;
 }
 
-/** Syncs the last RECENT_GAMES_CAP matches for `accountId`, fetching /metadata only
-    for matches not already cached locally. Returns { entry, profile }[], most-recent-
-    first, length <= RECENT_GAMES_CAP. `onProgress(done, totalNew)` fires as new
-    matches are fetched (totalNew is 0 when the cache is already fully up to date). */
+/** Syncs the last RECENT_GAMES_CAP ranked matches for `accountId`, fetching /metadata
+    only for matches not cached at the current PROFILE_VERSION. Returns
+    { items: {entry, profile}[] most-recent-first, recent: light entries of every mode }.
+    `onProgress(done, totalNew)` fires as matches are fetched (totalNew 0 = up to date). */
 async function syncMatchHistory(accountId, onProgress) {
   const cached = loadCachedHistory(accountId);
-  const cachedByMatchId = new Map((cached?.items ?? []).map((it) => [it.entry.match_id, it]));
+  const cachedByMatchId = new Map(
+    (cached?.items ?? []).filter((it) => it.profile?.version === PROFILE_VERSION).map((it) => [it.entry.match_id, it])
+  );
 
   const liveHistory = await getMatchHistory(accountId);
   if (!liveHistory.length) throw new Error('no matches found for that account');
 
-  const queue = buildRecentGamesQueue(liveHistory);
+  const ranked = liveHistory.filter((m) => m.match_mode === ANALYSIS_MATCH_MODE);
+  if (!ranked.length) throw new Error('no ranked matches found for that account');
+
+  const queue = buildRecentGamesQueue(ranked);
   const wanted = queue.all; // <= RECENT_GAMES_CAP entries, most-recent-first
 
   const totalNew = wanted.filter((entry) => !cachedByMatchId.has(entry.match_id)).length;
@@ -59,7 +69,9 @@ async function syncMatchHistory(accountId, onProgress) {
     return profile ? { entry, profile } : null;
   });
 
-  const items = (await runWithConcurrency(tasks, HISTORY_FETCH_CONCURRENCY)).filter(Boolean);
-  saveCachedHistory(accountId, items);
-  return items;
+  const items = (await runWithConcurrency(tasks, HISTORY_FETCH_CONCURRENCY))
+    .filter(Boolean)
+    .filter((it) => !it.profile.isBot && !it.profile.notScored);
+  saveCachedHistory(accountId, items, liveHistory);
+  return { items, recent: loadCachedHistory(accountId)?.recent ?? [] };
 }

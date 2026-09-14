@@ -29,14 +29,40 @@ const Store = {
   }
 };
 
-/** The cached recent-games record for one account: up to RECENT_GAMES_CAP
-    { entry, profile } pairs, most-recent-first, plus when it was last synced. */
+/** The cached record for one account: up to RECENT_GAMES_CAP ranked
+    { entry, profile } pairs (most-recent-first), the light entries of recent
+    matches in every mode (for sessions), and when it was last synced. */
 function loadCachedHistory(accountId) {
   return Store.get(`history:${accountId}`, null);
 }
 
-function saveCachedHistory(accountId, items) {
-  Store.set(`history:${accountId}`, { items, syncedAt: Date.now() });
+const RECENT_ENTRY_FIELDS = ['match_id', 'hero_id', 'start_time', 'match_duration_s', 'match_mode', 'match_result', 'player_team', 'player_kills', 'player_deaths', 'player_assists', 'net_worth'];
+const RECENT_ENTRY_LIMIT = 100;
+
+function saveCachedHistory(accountId, items, recentEntries = []) {
+  const recent = recentEntries.slice(0, RECENT_ENTRY_LIMIT).map((e) => Object.fromEntries(RECENT_ENTRY_FIELDS.map((f) => [f, e[f]])));
+  Store.set(`history:${accountId}`, { items, recent, syncedAt: Date.now() });
+}
+
+/* Goals and sessions, per account. Shape:
+   goals:    { active: goal|null, learned: goal[], grades: { [matchId]: grade } }
+   sessions: [{ startedAt, endedAt|null, goalId }] (oldest-first, capped) */
+const SESSION_LOG_LIMIT = 60;
+
+function loadGoalState(accountId) {
+  return Store.get(`goals:${accountId}`, { active: null, learned: [], grades: {} });
+}
+
+function saveGoalState(accountId, state) {
+  Store.set(`goals:${accountId}`, state);
+}
+
+function loadSessionLog(accountId) {
+  return Store.get(`sessions:${accountId}`, []);
+}
+
+function saveSessionLog(accountId, log) {
+  Store.set(`sessions:${accountId}`, log.slice(-SESSION_LOG_LIMIT));
 }
 
 /** Whose page this is. Remembered so returning visits land straight on the
