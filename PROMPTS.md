@@ -496,3 +496,17 @@ external sources we use as I don't want to take credit for the ideas."
   the games with MMR entries) and 3–2 in the other five. Baselines, win rate
   and targets are currently computed across both, which muddies exactly the
   numbers the goal loop would rely on. Needs fixing before building on it.
+
+**Prompt:** "what other things could I compile/research that would aid you
+in this next pass of vantage?"
+
+- Listed inputs only the owner can provide, in priority order: (1) their
+  goals, weak game phases and hero pool, to seed the goal loop; (2) a one-week
+  per-session gut-feel log (time, games, energy, tilt) as ground truth for
+  the overplaying detector; (3) sourced, rank-specific Deadlock benchmarks
+  and current objective timings, credited in CREDITS.md; (4) ~5 account ids
+  at other ranks to check whether insights generalize beyond one player.
+  Lower priority: whether Deadlock replays can load by match id and
+  timestamp, regular queue partners (a privacy call), homepage visual
+  references, other coaches' frameworks.
+- API field and game-mode research stays with Claude. No code changed.
