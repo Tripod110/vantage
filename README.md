@@ -222,3 +222,9 @@ installable/offline-first, so that part of the original "Tech stack" note
 doesn't apply here.
 
 See [`PROMPTS.md`](PROMPTS.md) for the running decision log.
+
+## Credits
+
+External ideas, data and assets Vantage relies on — including the coaching
+frameworks shaping its goal and regression design — are credited in
+[`CREDITS.md`](CREDITS.md).

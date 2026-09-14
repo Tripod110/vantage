@@ -461,3 +461,38 @@ to try using astra"
   double-suffixed unit strings, and burst rate-limiting.
 - Kept it as a repo doc rather than a vault note: an agent needs it to build
   or modify the code, which is the repo side of the split.
+
+## 2026-09-14
+
+**Prompt:** transcript of Deathy's *The Framework to be Top 1% in Any Game*
+(https://www.youtube.com/watch?v=o9-H6URkfDc), plus: "find the biggest
+takeaways... How can we integrate some of these ideas into vantage? What
+are we already doing... What are we not? What is the plateau point for most
+players? How can we surmount that? Lets also create a running list of any
+external sources we use as I don't want to take credit for the ideas."
+
+- New **`CREDITS.md`**: running list of external ideas, data and assets,
+  each with source, date added, what was drawn on, and implementation
+  status. Seeded with Deathy's framework, chess.com Game Review (the core
+  framing), deadlock-api.com, Valve (Deadlock/Steam assets), Statlocker
+  (consulted, not used) and Google Fonts. Owner's own prior projects stay
+  in README's "Reused from prior work". Rule: add an entry the moment an
+  external source shapes the app; flip Status when an idea ships.
+- Key takeaway mapped to Vantage: the video's framework resolves the
+  tension from the previous brief ("don't hold my hand" vs. protecting
+  mental state) — be blunt about **process** (what the player controls),
+  neutral about **outcomes** (matchmaking variance). Its core mechanism,
+  short-term goals that are measurable, yes/no and independent of winning,
+  is the biggest thing Vantage doesn't do: today's quest is a one-off line
+  that's never checked against later games.
+- Plateau, grounded in the owner's data: past the video's 50–100h loading
+  phase by a wide margin (699 matches, ~415h since 2024-08-19; 66 matches /
+  ~42h in the last 30 days), so volume isn't the missing input. Rank score
+  climbed 10 → 16 over six weeks but weekly gains shrank
+  (+1.1, +1.8, ~+2.0 over two weeks, +0.9, +0.2) — the video's "rank wall"
+  shape.
+- **Found a real data problem while checking:** the 20-game window mixes
+  match modes. Current window is 8–12 overall, but 5–10 in ranked (mode 4,
+  the games with MMR entries) and 3–2 in the other five. Baselines, win rate
+  and targets are currently computed across both, which muddies exactly the
+  numbers the goal loop would rely on. Needs fixing before building on it.
