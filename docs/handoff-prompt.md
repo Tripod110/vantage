@@ -9,8 +9,9 @@ Git history and source. Older entries in `PROMPTS.md` describe earlier versions.
 - Production: https://tripod110.github.io/vantage/
 - Vantage is a coaching-first Deadlock assistant: recent match evidence,
   a committed session goal, automatic feedback, and optional reflection.
-- **The owner explicitly changed the analysis window from 20 to 10 ranked
-  games in this session.** Do not restore 20 based on older docs or designs.
+- **The owner explicitly changed the display window to the latest 10 completed,
+  valid matches across modes.** Do not restore ranked-only filtering or 20 games
+  based on older docs or designs. Analyses still compare like with like by mode.
 - The owner requested automatic **S–F** personal-form grades **and** separate
   goal verdicts. Compare personal form with the other games in the window,
   not just winning games. Do not mix win/loss or goal outcomes into the letter.
@@ -29,24 +30,27 @@ Dark palette: background `#0b0c10`, panels `#15171e`, accent `#f0a020`,
 positive `#4caf7d`, negative `#e05a5a`.
 
 **Preserve existing Git history.** This iteration branched from `origin/main`
-as `codex/ten-game-coaching`. Production is intended to serve `main` at `/`.
+as `codex/all-mode-recency`. Production is intended to serve `main` at `/`.
 An older, unrelated Match desk exists on `gh-pages` and `codex/vantage-release`;
 do not switch to those or recreate the app. A previous agent changed Pages
 source and made main-branch updates invisible. Verify the actual public HTML
-and script contents before claiming deployment. Release asset version: `v=9`.
+and script contents before claiming deployment. Release asset version: `v=10`.
 
 ## What this iteration implements
 
-### Ten-game storage and sync
+### Ten-game all-mode storage and sync
 
-`RECENT_GAMES_CAP = 10`. `rankedWindow()` normalizes cache reads, saves, and app
-state: ranked mode 4, no bots/unscored matches, newest first, unique IDs.
-Existing 20-game caches are trimmed before first paint. The light all-mode
-history remains capped at 100 entries for activity/session facts and does not
-enter ranked grades or baselines. Incomplete seven-day coverage is labelled.
+`RECENT_GAMES_CAP = 10`. `recentWindow()` normalizes cache reads, saves, and app
+state: all modes, no bots/unscored matches, newest first, unique IDs. Existing
+ranked-only and 20-game caches are normalized before first paint, then the next
+sync fills the window from the latest valid matches across modes. The light
+history remains capped at 100 entries for activity/session facts. Incomplete
+seven-day coverage is labelled.
 
 Delta sync fetches metadata only for uncached or outdated profiles, with four
-concurrent requests and no polling. Explicit Refresh reports sync time and
+concurrent requests and no polling. If a recent match is unavailable, bot, or
+unscored, sync continues farther into history to backfill ten usable matches.
+Explicit Refresh reports sync time and
 retains usable cached content on failure. Partial profile failures are reported
 and retried on the next refresh. Selection survives refresh while retained.
 
@@ -60,7 +64,7 @@ metadata. Preserve this distinction when explaining or testing the migration.
 
 `gradePersonalForm(subject, profiles)` in `grading.js` is pure and shared by
 dashboard and review. It excludes the subject by match ID and uses at most
-nine other profiles from the current ranked window.
+nine other profiles with the same `match_mode` from the current recent window.
 
 Four equally weighted metrics:
 
@@ -101,6 +105,11 @@ metadata arriving later. Eight hits in ten measured committed games graduates
 the goal, preserves it under learned, and closes its session. Matches without
 a commitment still receive a form grade and show No session goal.
 
+Newly suggested goals store `matchMode` and only evaluate/count matches in that
+mode. A different-mode match during a session is explicitly not applicable and
+does not count as a hit, miss, or absent commitment. Legacy goals lack this field
+and remain universal to preserve historical behavior.
+
 Migrate old `goals:<accountId>` and `sessions:<accountId>` lazily without
 deleting those legacy keys. Resolve legacy sessions only through an unambiguous
 matching goal ID whose set time precedes session start. Preserve recorded
@@ -117,8 +126,8 @@ latest 60 records plus any needed by retained matches.
 ### Dashboard and review
 
 Dashboard order: compact identity/rank → teaching/refresh controls → active
-goal/latest verdict → ten equal-size hero/result/grade selector tiles and
-selected-match summary → recent-session facts → win/loss comparisons.
+goal/latest verdict → ten equal-size hero/result/grade/mode selector tiles and
+selected-match summary → recent-session facts → same-mode win/loss comparisons.
 Default selection is newest. Tiles have accessible names and pressed state.
 
 Review: shared form grade and committed goal evidence, expandable rubric,
@@ -140,7 +149,7 @@ copy equally grounded in evidence.
 |---|---|
 | `index.html`, `style.css` | Shell, ordered global scripts, responsive theme |
 | `steamid.js`, `api.js`, `assets.js` | IDs, API calls, cached hero/rank catalogs |
-| `queue.js`, `history.js`, `store.js` | Bounded ranked cache, delta sync, persistence/migration |
+| `queue.js`, `history.js`, `store.js` | Bounded all-mode recent cache, delta sync, persistence/migration |
 | `analyze.js`, `grading.js` | Profiles, comparisons/moments, form grades, chart observations |
 | `goals.js`, `coaching.js`, `sessions.js` | Targets, commitments/results, play-session facts |
 | `dashboard.js`, `experience.js` | Formatting and dashboard/shared evidence HTML |
@@ -167,18 +176,19 @@ and offline/empty-history controls. This is not a product demo mode; the
 production index does not load its script. Restart the local server after
 changing the server itself.
 
-Known real test account: `186993885` (Tripod); `1113640227` also has ranked
+Known real test account: `186993885` (Tripod); `1113640227` also has match
 history. Do not hard-code their changing ranks, counts, or outcomes.
 
 ## Validation and release status
 
-Implementation is complete; final validation and production publication are
-being completed in this session. Update this section before the final push.
-Browser checks already exercised the live API account, matching dashboard and
-review grades, timestamp/keyboard inspection, teaching mode, mobile layout
-at 375px, optional notes/tags, and cached offline results. Regression tests
-cover the rubric, cache migration, zero metadata calls, goal lifecycle, missing
-measurements, legacy migration, and account isolation.
+The all-mode iteration is implemented locally on `codex/all-mode-recency`; it is
+not yet published. Forty Node regression tests pass. They cover mixed-mode cache
+migration and recency, zero metadata calls, unavailable-match backfill, bounded
+concurrency, same-mode grading, mode-scoped goals, goal lifecycle, missing
+measurements, legacy migration, and account isolation. The mixed-mode browser
+fixture confirms visible mode labels, selection-driven scope changes, and
+same-mode dashboard/review comparison counts. Verify live API behavior and the
+public assets before calling this deployed.
 
 ## Deferred work
 

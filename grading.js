@@ -15,9 +15,10 @@ function formValue(profile, def) {
   return Number.isFinite(v) && !(Number.isFinite(profile.durationS) && profile.durationS < def.minSeconds) ? v : null;
 }
 
-/** Profiles must be from the current ranked window. Subject exclusion uses identity, never array position. */
+/** Profiles may span modes; only the subject's mode is a valid comparison baseline. */
 function gradePersonalForm(subject, profiles) {
-  const pool = [...new Map(profiles.filter((p) => p.matchId !== subject.matchId && !p.isBot && !p.notScored)
+  const pool = [...new Map(profiles.filter((p) => p.matchId !== subject.matchId && !p.isBot && !p.notScored &&
+      (subject.matchMode == null || p.matchMode === subject.matchMode))
     .sort((a, b) => b.startTime - a.startTime).map((p) => [p.matchId, p])).values()].slice(0, 9);
   const metrics = FORM_METRICS.map((def) => {
     const value = formValue(subject, def);

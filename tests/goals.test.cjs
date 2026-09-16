@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const ctx = require('./load.cjs')('analyze.js', 'goals.js');
 
 const prof = (o) => ({ win: false, deaths: 6, deathsBy10: 1, soulsVsLobby10: 0, soulsPerMin12: 700, creepDamage20: 15000, itemsBy10: 14, accuracy: 0.4, soulsLostToDeaths: 4000, csPct12: 0.7, kda: 2, ...o });
-const item = (startS, p) => ({ entry: { match_id: startS, start_time: startS }, profile: prof(p) });
+const item = (startS, p, matchMode = 4) => ({ entry: { match_id: startS, match_mode: matchMode, start_time: startS }, profile: prof(p) });
 
 test('goal evaluation respects direction and unmeasurable matches', () => {
   const g = { metric: 'deathsBy10', op: '<=', threshold: 1 };
@@ -24,6 +24,12 @@ test('only games since the goal was set count, and 8 of the last 10 means learne
 
   const notYet = ctx.goalProgress(g, after.slice(0, 9));
   assert.equal(notYet.learned, false, 'needs a full 10-game window');
+});
+test('goal progress only counts the goal mode while legacy goals remain universal', () => {
+  const scoped = { metric: 'deathsBy10', op: '<=', threshold: 1, setAt: 0, matchMode: 4 };
+  const items = [item(1, { deathsBy10: 0 }, 4), item(2, { deathsBy10: 0 }, 1)];
+  assert.equal(ctx.goalProgress(scoped, items).measured, 1);
+  assert.equal(ctx.goalProgress({ ...scoped, matchMode: undefined }, items).measured, 2);
 });
 
 test('learned goals that drop below 50% are reported as slipping', () => {

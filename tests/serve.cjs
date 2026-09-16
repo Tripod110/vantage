@@ -13,7 +13,7 @@ http.createServer((req, res) => {
     if (err) { res.writeHead(404); return res.end(); }
     res.writeHead(200, { 'Content-Type': types[path.extname(file)], 'Cache-Control': 'no-store' });
     if (url.pathname === '/' && url.searchParams.get('fixture') === 'coaching') {
-      body = body.toString().replace('<script src="app.js?v=9"></script>', '<script src="tests/browser-fixture.js"></script><script src="app.js?v=9"></script>');
+      body = body.toString().replace('<script src="app.js?v=10"></script>', '<script src="tests/browser-fixture.js"></script><script src="app.js?v=10"></script>');
     }
     res.end(body);
   });

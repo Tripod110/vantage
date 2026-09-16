@@ -6,8 +6,9 @@ const fixtureNow = Math.floor(Date.now() / 1000);
 const fixtureItems = Array.from({ length: 20 }, (_, i) => {
   const id = 200 - i;
   const start = fixtureNow - 3600 * (i + 1);
-  return { entry: { match_id: id, hero_id: 1, start_time: start, match_duration_s: 1800, match_mode: 4, player_team: 0, match_result: i % 2, player_kills: 3, player_deaths: 4, player_assists: 5, net_worth: 12000 },
-    profile: { version: 3, matchId: id, heroId: 1, startTime: start, durationS: 1800, win: i % 2 === 0, deaths: 4, kills: 3, assists: 5, deathsBy10: i % 3, soulsVsLobby10: i * 100 - 400, csPct12: .6 + i / 100, kda: 2,
+  const matchMode = i % 4 === 0 ? 1 : 4;
+  return { entry: { match_id: id, hero_id: 1, start_time: start, match_duration_s: 1800, match_mode: matchMode, player_team: 0, match_result: i % 2, player_kills: 3, player_deaths: 4, player_assists: 5, net_worth: 12000 },
+    profile: { version: 3, matchId: id, matchMode, heroId: 1, startTime: start, durationS: 1800, win: i % 2 === 0, deaths: 4, kills: 3, assists: 5, deathsBy10: i % 3, soulsVsLobby10: i * 100 - 400, csPct12: .6 + i / 100, kda: 2,
       soulsPerMin12: 700, itemsBy10: 12, creepDamage20: 18000, soulsLostToDeaths: 500, accuracy: .4,
       mySoulsSeries: [{ t: 0, souls: 0 }, { t: 600, souls: 5000 + i * 100 }, { t: 1200, souls: 9000 }, { t: 1800, souls: 12000 }],
       leadByMinute: [{ minute: 0, lead: 0 }, { minute: 15, lead: 4000 }, { minute: 30, lead: -2000 }], yourDeathTimesS: [600, 680, 780] } };

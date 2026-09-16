@@ -1,4 +1,4 @@
-/* Shell: cache-first ranked window, versioned commitments, and shared automatic evidence. */
+/* Shell: cache-first recent window, versioned commitments, and shared automatic evidence. */
 const State = { accountId: null, items: [], recent: [], steam: null, mmr: [], selectedMatchId: null,
   teaching: Store.get('teaching', false), coaching: migrateCoaching(), lastModel: null, syncedAt: null,
   view: 'landing', loading: false, request: 0, chart: null };
@@ -24,7 +24,7 @@ function showView(name) {
 function persistCoaching() { saveCoaching(State.accountId, State.coaching); }
 
 function normalizeState() {
-  State.items = rankedWindow(State.items);
+  State.items = recentWindow(State.items);
   if (!State.items.some((it) => it.entry.match_id === State.selectedMatchId)) State.selectedMatchId = State.items[0]?.entry.match_id ?? null;
   reconcileCoaching(State.coaching, State.items, Date.now(), false);
   persistCoaching();
@@ -48,7 +48,7 @@ async function refreshAccount() {
   const request = ++State.request;
   State.loading = true;
   renderDashboardView();
-  setStatus(State.items.length ? 'Checking for new ranked games…' : 'Loading your last 10 ranked games…');
+  setStatus(State.items.length ? 'Checking for new matches…' : 'Loading your last 10 matches…');
   try {
     const [sync, catalogs, identity] = await Promise.allSettled([
       syncMatchHistory(accountId, (done, total) => {
@@ -110,12 +110,12 @@ function renderReview() {
   if (!subject) return;
   const { entry, profile } = subject;
   el.reviewCard.dataset.matchId = entry.match_id;
-  const others = State.items.filter((it) => it.entry.match_id !== entry.match_id).map((it) => it.profile);
+  const others = State.items.filter((it) => it.entry.match_id !== entry.match_id && sameMatchMode(it, subject)).map((it) => it.profile);
   const grade = gradePersonalForm(profile, others);
   const baseline = rollingBaseline(others, others.length);
   const moments = buildFlaggedMoments(profile, baseline.metrics.itemsBy10?.n ? baseline.metrics.itemsBy10.median : null, State.teaching)
     .filter((m) => m.atS <= profile.durationS);
-  el.reviewCard.innerHTML = `<section class="card"><div class="card-head"><h2 tabindex="-1">${esc(heroName(entry.hero_id))} · ${profile.win ? 'Win' : 'Loss'}</h2><span class="faint">${duration(profile.durationS)}</span></div>
+  el.reviewCard.innerHTML = `<section class="card"><div class="card-head"><h2 tabindex="-1">${esc(heroName(entry.hero_id))} · ${profile.win ? 'Win' : 'Loss'}</h2><span class="faint">${esc(matchModeLabel(entry.match_mode))} · ${duration(profile.durationS)}</span></div>
     ${gradeHtml(grade, true)}${goalEvidenceHtml(matchGoalResult(subject, State.coaching), State.teaching)}</section>
     <section class="card chart-wrap"><h3 class="card-label">Economy through the match</h3><canvas aria-label="Economy chart. Use the time slider below to inspect values."></canvas>
     <label for="chart-time">Inspect match time</label><input id="chart-time" type="range" min="0" max="${Math.floor(profile.durationS)}" value="0" step="1">

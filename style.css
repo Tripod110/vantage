@@ -531,6 +531,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .match-tile strong { font-family: Sora, sans-serif; font-size: 24px; }
 .match-tile span { font-size: 11px; }
 .match-tile .tile-hero { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.match-tile .tile-mode { padding: 2px 5px; border-radius: 999px; background: var(--panel-hover); color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
 .match-tile:hover { background: var(--panel-hover); }
 .match-tile.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); background: rgba(240,160,32,.07); }
 .detail-name { margin: 0 0 4px; }

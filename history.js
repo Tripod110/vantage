@@ -8,11 +8,6 @@
 
 const HISTORY_FETCH_CONCURRENCY = 4;
 
-/* The window only ever holds games of this mode. Mixing modes contaminated every
-   baseline (8–12 overall was 5–10 in ranked). Deadlock's match_mode 4 is ranked
-   (metadata ranked_type 1). Other modes still feed sessions, never the analysis. */
-const ANALYSIS_MATCH_MODE = 4;
-
 /** Runs `tasks` (functions returning promises) with at most `limit` in flight at once. */
 async function runWithConcurrency(tasks, limit) {
   const results = new Array(tasks.length);
@@ -36,7 +31,7 @@ async function runWithConcurrency(tasks, limit) {
   return results;
 }
 
-/** Syncs the last RECENT_GAMES_CAP ranked matches for `accountId`, fetching /metadata
+/** Syncs the last RECENT_GAMES_CAP completed matches for `accountId`, fetching /metadata
     only for matches not cached at the current PROFILE_VERSION. Returns
     { items: {entry, profile}[] most-recent-first, recent: light entries of every mode }.
     `onProgress(done, totalNew)` fires as matches are fetched (totalNew 0 = up to date). */
@@ -49,31 +44,41 @@ async function syncMatchHistory(accountId, onProgress) {
   const liveHistory = await getMatchHistory(accountId);
   if (!liveHistory.length) throw new Error('no matches found for that account');
 
-  const ranked = liveHistory.filter((m) => m.match_mode === ANALYSIS_MATCH_MODE);
-  if (!ranked.length) throw new Error('no ranked matches found for that account');
-
-  const queue = buildRecentGamesQueue(ranked);
-  const wanted = queue.all; // <= RECENT_GAMES_CAP entries, most-recent-first
-
-  const totalNew = wanted.filter((entry) => !cachedByMatchId.has(entry.match_id)).length;
+  const candidates = [...new Map(liveHistory.map((entry) => [entry.match_id, entry])).values()]
+    .sort((a, b) => b.start_time - a.start_time);
+  const items = [];
   let done = 0;
-  onProgress?.(done, totalNew);
+  let totalNew = 0;
+  let missing = 0;
+  let cursor = 0;
+  onProgress?.(0, 0);
 
-  const tasks = wanted.map((entry) => async () => {
-    const hit = cachedByMatchId.get(entry.match_id);
-    if (hit) return hit; // already have it — no network call
-    const meta = await getMatchMetadata(entry.match_id);
-    const profile = extractProfile(meta, accountId);
-    done++;
+  // Continue past unavailable, bot, or unscored matches so the visible window still
+  // contains the latest ten usable completed matches whenever history permits it.
+  while (items.length < RECENT_GAMES_CAP && cursor < candidates.length) {
+    const needed = RECENT_GAMES_CAP - items.length;
+    const batch = candidates.slice(cursor, cursor + needed);
+    cursor += batch.length;
+    const newEntries = batch.filter((entry) => !cachedByMatchId.has(entry.match_id));
+    totalNew += newEntries.length;
     onProgress?.(done, totalNew);
-    return profile ? { entry, profile } : null;
-  });
-
-  const results = await runWithConcurrency(tasks, HISTORY_FETCH_CONCURRENCY);
-  const missing = results.filter((it) => !it).length;
-  const items = results
-    .filter(Boolean)
-    .filter((it) => !it.profile.isBot && !it.profile.notScored);
-  saveCachedHistory(accountId, items, liveHistory);
-  return { items, missing, recent: loadCachedHistory(accountId)?.recent ?? [], syncedAt: loadCachedHistory(accountId)?.syncedAt };
+    const fetched = new Map((await runWithConcurrency(newEntries.map((entry) => async () => {
+      try {
+        const meta = await getMatchMetadata(entry.match_id);
+        const profile = extractProfile(meta, accountId);
+        return profile ? { entry, profile: { ...profile, matchMode: entry.match_mode } } : null;
+      } finally {
+        done++;
+        onProgress?.(done, totalNew);
+      }
+    }), HISTORY_FETCH_CONCURRENCY)).filter(Boolean).map((it) => [it.entry.match_id, it]));
+    missing += newEntries.length - fetched.size;
+    for (const entry of batch) {
+      const item = cachedByMatchId.get(entry.match_id) ?? fetched.get(entry.match_id);
+      if (item && !item.profile.isBot && !item.profile.notScored) items.push(item);
+    }
+  }
+  const normalized = recentWindow(items);
+  saveCachedHistory(accountId, normalized, liveHistory);
+  return { items: normalized, missing, recent: loadCachedHistory(accountId)?.recent ?? [], syncedAt: loadCachedHistory(accountId)?.syncedAt };
 }

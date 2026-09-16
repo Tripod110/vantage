@@ -285,7 +285,7 @@ function buildFlaggedMoments(profile, itemsBaseline = null, teaching = false) {
 }
 
 /* ── What separates your games ─────────────────────────────────────────────
-   Compares the player's wins against their losses inside the ranked window,
+   Compares the player's wins against their losses inside one mode's recent window,
    per metric. This replaces "furthest below your median": the median of a
    losing stretch is a losing standard, and a metric can sit far from median
    without having anything to do with whether games are won. Everything here

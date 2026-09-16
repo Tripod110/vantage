@@ -3,15 +3,18 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const ctx = require('./load.cjs')('queue.js', 'analyze.js', 'goals.js', 'coaching.js', 'store.js', 'history.js');
 const goal = (id = 'g') => ({ id, metric: 'deathsBy10', threshold: 1, op: '<=', label: '1 or fewer deaths', setAt: 1000 });
-const item = (id, at = id, o = {}) => ({ entry: { match_id: id, match_mode: 4, start_time: at }, profile: { matchId: id, version: 3, durationS: 1800, deathsBy10: 1, ...o } });
+const item = (id, at = id, o = {}) => {
+  const { matchMode = 4, ...profile } = o;
+  return { entry: { match_id: id, match_mode: matchMode, start_time: at }, profile: { matchId: id, matchMode, version: 3, durationS: 1800, deathsBy10: 1, ...profile } };
+};
 function storage() {
   const map = new Map();
   ctx.localStorage = { getItem: (k) => map.get(k) ?? null, setItem: (k,v) => map.set(k,v), removeItem: (k) => map.delete(k) };
   return map;
 }
-test('20-game caches trim before return and saving never exceeds ten', () => {
+test('mixed-mode caches normalize by recency and never exceed ten', () => {
   const map = storage();
-  const items = Array.from({ length: 20 }, (_, i) => item(i + 1));
+  const items = Array.from({ length: 20 }, (_, i) => item(i + 1, i + 1, { matchMode: i % 2 ? 4 : 1 }));
   map.set('vantage:history:1', JSON.stringify({ items, syncedAt: 123 }));
   const result = ctx.loadCachedHistory(1);
   assert.equal(result.items.length, 10); assert.equal(result.items[0].entry.match_id, 20); assert.equal(result.syncedAt, 123);
@@ -96,9 +99,28 @@ test('failed metadata is reported and retried without fetching retained profiles
   ctx.getMatchHistory = async () => [item(11).entry, ...items.map((it) => it.entry).reverse()];
   let calls = 0; ctx.getMatchMetadata = async () => { calls++; throw Error('test unavailable'); };
   const first = await ctx.syncMatchHistory(1);
-  assert.equal(first.missing, 1); assert.equal(first.items.length, 9); assert.equal(calls, 1);
+  assert.equal(first.missing, 1); assert.equal(first.items.length, 10); assert.equal(calls, 1);
   await ctx.syncMatchHistory(1);
   assert.equal(calls, 2, 'only the missing match is retried');
+});
+
+test('sync returns the latest valid matches across modes in one recency window', async () => {
+  storage();
+  const entries = Array.from({ length: 12 }, (_, i) => item(i + 1, i + 1, { matchMode: i % 3 === 0 ? 1 : 4 }));
+  ctx.getMatchHistory = async () => entries.map((it) => it.entry).reverse();
+  ctx.getMatchMetadata = async (id) => ({ match_id: id, duration_s: 1800, players: [{ account_id: 1, hero_id: 1, stats: [] }] });
+  const result = await ctx.syncMatchHistory(1);
+  assert.deepEqual(Array.from(result.items, (it) => it.entry.match_id), [12,11,10,9,8,7,6,5,4,3]);
+  assert.ok(result.items.some((it) => it.entry.match_mode === 1));
+  assert.ok(result.items.some((it) => it.entry.match_mode === 4));
+});
+
+test('mode-scoped commitments ignore matches from another mode', () => {
+  const c = ctx.migrateCoaching();
+  ctx.replaceCoachingGoal(c, { ...goal(), matchMode: 4 }, 1000);
+  assert.equal(ctx.matchGoalResult(item(1, 2, { matchMode: 1, deathsBy10: 0 }), c).status, 'mode-mismatch');
+  assert.equal(ctx.committedProgress(c.active, [item(1, 2, { matchMode: 1, deathsBy10: 0 })], c).measured, 0);
+  assert.equal(ctx.matchGoalResult(item(2, 3, { matchMode: 4, deathsBy10: 0 }), c).hit, true);
 });
 
 test('metadata concurrency stays bounded at four', async () => {

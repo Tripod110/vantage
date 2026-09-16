@@ -622,3 +622,26 @@ Updated README, CREDITS, and docs/handoff-prompt.md so a new machine can continu
 from the repository. Implementation branch: codex/ten-game-coaching, based on
 existing origin/main history. Asset version v9. Final deployment status is recorded
 in the current handoff rather than inferred from a successful push.
+
+## 2026-09-15 — All-mode recent matches with mode-aware coaching
+
+The owner clarified that Vantage should display the player's recent matches,
+not only ranked matches. The ranked-only filter explained why valid matches
+appeared to be missing even when the upstream history endpoint had them.
+
+The display/cache window now contains the latest ten completed, usable matches
+across modes, newest first. Sync continues farther into history when metadata is
+unavailable or identifies a bot/unscored match, so one bad candidate does not
+unnecessarily shrink the window. Existing ranked-only caches remain usable and
+are naturally replaced by the next sync.
+
+To avoid recreating the earlier mixed-mode-baseline problem, every match tile
+shows its mode while personal-form grades, economy comparisons, flagged-moment
+baselines, win/loss separators, and suggested goals use only the selected
+match's mode. New goal commitments store their mode and ignore different-mode
+matches; legacy goals without a mode retain their previous universal behavior.
+
+Implementation branch: `codex/all-mode-recency`. Asset version v10. Forty Node
+regression tests pass, including mixed-mode recency, same-mode grading, goal
+scope, unavailable metadata backfill, and unchanged-cache behavior. Publication
+is not implied by this entry; consult the current handoff for release status.

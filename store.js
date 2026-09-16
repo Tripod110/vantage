@@ -29,13 +29,13 @@ const Store = {
   }
 };
 
-/** The cached record for one account: up to RECENT_GAMES_CAP ranked
+/** The cached record for one account: up to RECENT_GAMES_CAP recent completed
     { entry, profile } pairs (most-recent-first), the light entries of recent
     matches in every mode (for sessions), and when it was last synced. */
 function loadCachedHistory(accountId) {
   const cache = Store.get(`history:${accountId}`, null);
   if (!cache) return null;
-  const items = rankedWindow(cache.items ?? []);
+  const items = recentWindow(cache.items ?? []);
   const normalized = { ...cache, items };
   if (JSON.stringify(items) !== JSON.stringify(cache.items)) Store.set(`history:${accountId}`, normalized);
   return normalized;
@@ -46,7 +46,7 @@ const RECENT_ENTRY_LIMIT = 100;
 
 function saveCachedHistory(accountId, items, recentEntries = []) {
   const recent = recentEntries.slice(0, RECENT_ENTRY_LIMIT).map((e) => Object.fromEntries(RECENT_ENTRY_FIELDS.map((f) => [f, e[f]])));
-  Store.set(`history:${accountId}`, { items: rankedWindow(items), recent, syncedAt: Date.now() });
+  Store.set(`history:${accountId}`, { items: recentWindow(items), recent, syncedAt: Date.now() });
 }
 
 function loadCoaching(accountId) {

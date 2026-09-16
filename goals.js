@@ -108,10 +108,15 @@ function evaluateGoal(goal, profile) {
   return goal.op === '<=' ? v <= goal.threshold : v >= goal.threshold;
 }
 
+/** Legacy goals had no mode field and remain universal; new goals are mode-scoped. */
+function goalAppliesToItem(goal, item) {
+  return goal?.matchMode == null || goal.matchMode === item.entry.match_mode;
+}
+
 /** Hit rate for a goal over window items played since it was set (most-recent-first in, any order ok). */
 function goalProgress(goal, items, sinceMs = goal.setAt) {
   const games = items
-    .filter((it) => it.entry.start_time * 1000 >= sinceMs)
+    .filter((it) => it.entry.start_time * 1000 >= sinceMs && goalAppliesToItem(goal, it))
     .sort((a, b) => b.entry.start_time - a.entry.start_time).slice(0, 10);
   const results = games.map((it) => ({ matchId: it.entry.match_id, hit: evaluateGoal(goal, it.profile) })).filter((r) => r.hit !== null);
   const recent = results.slice(0, LEARNED_WINDOW);
@@ -133,7 +138,7 @@ function slippingGoals(learned, items) {
     .filter(({ progress }) => progress.recentMeasured >= SLIPPING_MIN_GAMES && progress.recentHits / progress.recentMeasured < SLIPPING_RATE);
 }
 
-/** Ranked games in the window played outside any started session. */
+/** Recent games in the window played outside any started session. */
 function gamesWithoutSession(items, sessionStarts) {
   const recent = [...items].sort((a, b) => b.entry.start_time - a.entry.start_time).slice(0, LEARNED_WINDOW);
   const inSession = (it) => sessionStarts.some((s) => it.entry.start_time * 1000 >= s.startedAt && (s.endedAt == null || it.entry.start_time * 1000 <= s.endedAt));

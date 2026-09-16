@@ -9,12 +9,15 @@
 
 const RECENT_GAMES_CAP = 10;
 
-/** Normalize every ingress, including older caches, before any analysis or paint. */
-function rankedWindow(items) {
-  return [...new Map(items.filter((it) => it.entry?.match_mode === 4 && it.profile && !it.profile.isBot && !it.profile.notScored)
-    .map((it) => [it.entry.match_id, it])).values()]
+/** Normalize every ingress, including older ranked-only caches, before analysis or paint. */
+function recentWindow(items) {
+  return [...new Map(items.filter((it) => it.entry && it.profile && !it.profile.isBot && !it.profile.notScored)
+    .map((it) => [it.entry.match_id, { ...it, profile: { ...it.profile, matchMode: it.entry.match_mode } }])).values()]
     .sort((a, b) => b.entry.start_time - a.entry.start_time).slice(0, RECENT_GAMES_CAP);
 }
+
+const matchModeLabel = (mode) => mode == null ? 'Recent' : mode === 4 ? 'Ranked' : 'Non-ranked';
+const sameMatchMode = (a, b) => a?.entry?.match_mode === b?.entry?.match_mode;
 
 class RecentGamesQueue {
   constructor(capacity = RECENT_GAMES_CAP) {

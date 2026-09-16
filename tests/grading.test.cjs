@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const ctx = require('./load.cjs')('analyze.js', 'grading.js');
-const profile = (id, o = {}) => ({ matchId: id, startTime: id, durationS: 1800, deathsBy10: 2, soulsVsLobby10: 100, csPct12: .5, kda: 2, ...o });
+const profile = (id, o = {}) => ({ matchId: id, matchMode: 4, startTime: id, durationS: 1800, deathsBy10: 2, soulsVsLobby10: 100, csPct12: .5, kda: 2, ...o });
 const pool = Array.from({ length: 9 }, (_, i) => profile(i + 1));
 
 test('every S–F threshold has explicit boundaries', () => {
@@ -14,6 +14,13 @@ test('ties give half credit and subject identity is excluded', () => {
   const subject = profile(50);
   const r = ctx.gradePersonalForm(subject, [...pool, { ...subject }]);
   assert.equal(r.n, 9); assert.equal(r.score, 50); assert.equal(r.letter, 'C');
+});
+test('personal form excludes comparison games from another mode', () => {
+  const otherMode = Array.from({ length: 6 }, (_, i) => profile(100 + i, { matchMode: 1, deathsBy10: 0 }));
+  const r = ctx.gradePersonalForm(profile(50), [...pool.slice(0, 5), ...otherMode]);
+  assert.equal(r.n, 5);
+  assert.equal(r.metrics[0].n, 5);
+  assert.equal(r.score, 50);
 });
 test('lower deaths and higher other metrics improve form, including crossing zero', () => {
   const subject = profile(50, { deathsBy10: 0, soulsVsLobby10: 200, csPct12: .9, kda: 5 });

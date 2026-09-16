@@ -35,6 +35,7 @@ function matchGoalResult(item, coaching) {
   if (legacy) return { status: 'legacy', goal: session?.goal ?? { label: legacy.goalLabel }, value: null, hit: legacy.actualHit ?? null };
   if (session?.goal) {
     const goal = session.goal;
+    if (!goalAppliesToItem(goal, item)) return { status: 'mode-mismatch', goal, value: null, hit: null, sessionId: session.id };
     return { status: 'committed', goal, value: GOAL_METRIC_GET[goal.metric]?.(item.profile) ?? null, hit: evaluateGoal(goal, item.profile), sessionId: session.id };
   }
   return { status: session ? 'unavailable' : 'none', goal: null, value: null, hit: null };

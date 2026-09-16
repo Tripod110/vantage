@@ -62,7 +62,7 @@ function identityHtml(accountId, steam, mmr) {
 function recentlyHtml(m, nowS) {
   const s = m.lastSession;
   if (!s) return '';
-  const ranked = s.games.filter((e) => e.match_mode === ANALYSIS_MATCH_MODE).length;
+  const ranked = s.games.filter((e) => e.match_mode === 4).length;
   const other = s.games.length - ranked;
   const decay = sessionDecay(s);
   const lastEnd = s.end;
@@ -103,7 +103,7 @@ function recentlyHtml(m, nowS) {
     <div class="session-line">
       <span class="big">${isToday ? 'Today' : new Date(s.start * 1000).toLocaleDateString([], { weekday: 'long' })}, ${clock(s.start)}&ndash;${clock(s.end)}</span>
       <span>${s.games.length} game${s.games.length === 1 ? '' : 's'} &middot; ${record(s.wins, s.losses)} &middot; ${hoursMinutes(s.durationS)}</span>
-      ${other ? `<span class="faint">${ranked} ranked, ${other} unranked (unranked games aren't analyzed)</span>` : ''}
+      ${other ? `<span class="faint">${ranked} ranked, ${other} non-ranked</span>` : ''}
     </div>
     ${decayHtml}
     <div class="facts">
@@ -122,11 +122,12 @@ function evidenceText(ev) {
 
 function separatorsHtml(m) {
   const sep = m.sep;
+  const scope = `<p class="faint">Using ${m.analysisCount} ${esc(matchModeLabel(m.analysisMode)).toLowerCase()} match${m.analysisCount === 1 ? '' : 'es'} from the recent window.</p>`;
   if (!sep.ok) {
     return `
     <section class="card fade-in">
       <h3 class="card-label">What separates your wins from your losses</h3>
-      <p class="fact">Not enough to compare yet: <strong>${sep.nWins} wins</strong> and <strong>${sep.nLosses} losses</strong> in your window. It needs at least 3 of each.</p>
+      ${scope}<p class="fact">Not enough to compare yet: <strong>${sep.nWins} wins</strong> and <strong>${sep.nLosses} losses</strong> in this mode. It needs at least 3 of each.</p>
     </section>`;
   }
   const rows = sep.rows.slice(0, 4);
@@ -138,7 +139,7 @@ function separatorsHtml(m) {
   return `
   <section class="card fade-in">
     <h3 class="card-label">What separates your wins from your losses</h3>
-    ${
+    ${scope}${
       rows.length
         ? `<div class="sep-table">
         <div class="sep-row sep-head"><span></span><span>Wins (${sep.nWins})</span><span>Losses (${sep.nLosses})</span></div>

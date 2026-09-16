@@ -1,6 +1,6 @@
 # Vantage
 
-A coaching-first Deadlock companion: **your last 10 ranked games, read closely**.
+A coaching-first Deadlock companion: **your last 10 matches, read closely**.
 Choose a measurable goal before a session, get automatic match feedback, and
 keep optional notes about what you noticed.
 
@@ -8,7 +8,9 @@ keep optional notes about what you noticed.
 
 ## Current experience
 
-- Ten-game ranked window, cached on this device and synced incrementally.
+- Ten-game all-mode recency window, cached on this device and synced incrementally.
+- Visible mode labels with grades, baselines, separators, and new goals scoped
+  to the selected match's mode.
 - Automatic **S–F personal-form grades**, comparing each match with the other
   available games, independent of winning or meeting the session goal.
 - Separate **goal hit / missed / unmeasurable** verdicts against the target
@@ -53,7 +55,7 @@ does not load that fixture.
 Plain HTML/CSS/global JavaScript, no framework, backend, API key, or bundler.
 Data comes from deadlock-api.com. Local storage uses `vantage:` keys.
 
-- `queue.js` / `history.js` / `store.js`: last-ten ranked cache, four concurrent
+- `queue.js` / `history.js` / `store.js`: last-ten recent cache, four concurrent
   metadata fetches, no polling, versioned coaching migration.
 - `analyze.js` / `grading.js`: profile extraction, comparisons, grounded
   moments, transparent personal-form grading and chart observations.
@@ -65,13 +67,14 @@ Data comes from deadlock-api.com. Local storage uses `vantage:` keys.
 - `api.js` / `steamid.js` / `assets.js`: endpoint client, numeric Steam IDs and
   numeric profile links, cached hero and rank catalogs.
 
-Older 20-game caches trim before rendering. Profile version 3 fixes missing
+Older ranked-only and 20-game caches normalize before rendering. The next sync
+fills the window with the latest valid matches across modes. Profile version 3 fixes missing
 fields being interpreted as zero, requiring one refresh of older profiles;
 an unchanged valid cache makes zero metadata requests. Existing goal records,
 notes, tags, and saved verdicts are migrated without deleting legacy keys.
 
 GitHub Pages serves `main` at the repository root; script/style asset version
-is `v=9`. Preserve this app's Git history. Older unrelated app branches are
+is `v=10`. Preserve this app's Git history. Older unrelated app branches are
 not the deployment source. Always verify public HTML/scripts after publishing.
 
 ## Handoff, history, and credits
