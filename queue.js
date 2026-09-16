@@ -1,13 +1,20 @@
 /* Vantage — bounded recent-games memory, modeled explicitly as a queue.
    Vantage never diffs a match against a player's ENTIRE history (that
    erases who they are right now behind years of stale data) — only
-   against a hard-capped window of their last 20 games, no more, no less.
+   against a hard-capped window of their last 10 games, no more, no less.
    The most recent game is always the front; once the window is full, the
    least recent game is the next one out. This queue is what gets persisted
    (see store.js) so day-to-day play morphs the window instead of Vantage
    re-fetching a player's whole history from scratch on every visit. */
 
-const RECENT_GAMES_CAP = 20;
+const RECENT_GAMES_CAP = 10;
+
+/** Normalize every ingress, including older caches, before any analysis or paint. */
+function rankedWindow(items) {
+  return [...new Map(items.filter((it) => it.entry?.match_mode === 4 && it.profile && !it.profile.isBot && !it.profile.notScored)
+    .map((it) => [it.entry.match_id, it])).values()]
+    .sort((a, b) => b.entry.start_time - a.entry.start_time).slice(0, RECENT_GAMES_CAP);
+}
 
 class RecentGamesQueue {
   constructor(capacity = RECENT_GAMES_CAP) {

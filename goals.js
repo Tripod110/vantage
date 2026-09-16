@@ -1,8 +1,7 @@
 /* Vantage — goals and accountability. A goal is a yes/no rule checked against a
    match's data, independent of whether the game was won (the framing comes from
-   Deathy's improvement framework — see CREDITS.md). The player grades each game
-   against the goal before seeing the verdict; comparing the two measures how
-   well they read their own play. Pure functions: persistence lives in store.js. */
+   Deathy's improvement framework — see CREDITS.md). Coaching evaluates the
+   committed target automatically. Pure functions: persistence lives in store.js. */
 
 const LEARNED_WINDOW = 10; // judge "learned" and "slipping" over this many recent games
 const LEARNED_HITS = 8; // hits within the window to count a goal as learned
@@ -102,6 +101,8 @@ function suggestGoals(sep, nowMs, limit = 3) {
 
 /** true / false, or null when this match can't measure the goal (e.g. ended before 20 min). */
 function evaluateGoal(goal, profile) {
+  const required = { deathsBy10: 600, soulsVsLobby10: 600, itemsBy10: 600, soulsPerMin12: 720, creepDamage20: 1200 }[goal.metric];
+  if (required && Number.isFinite(profile.durationS) && profile.durationS < required) return null;
   const v = GOAL_METRIC_GET[goal.metric]?.(profile);
   if (v === null || v === undefined || !Number.isFinite(v)) return null;
   return goal.op === '<=' ? v <= goal.threshold : v >= goal.threshold;
@@ -111,7 +112,7 @@ function evaluateGoal(goal, profile) {
 function goalProgress(goal, items, sinceMs = goal.setAt) {
   const games = items
     .filter((it) => it.entry.start_time * 1000 >= sinceMs)
-    .sort((a, b) => b.entry.start_time - a.entry.start_time);
+    .sort((a, b) => b.entry.start_time - a.entry.start_time).slice(0, 10);
   const results = games.map((it) => ({ matchId: it.entry.match_id, hit: evaluateGoal(goal, it.profile) })).filter((r) => r.hit !== null);
   const recent = results.slice(0, LEARNED_WINDOW);
   const recentHits = recent.filter((r) => r.hit).length;
@@ -130,13 +131,6 @@ function slippingGoals(learned, items) {
   return learned
     .map((g) => ({ goal: g, progress: goalProgress(g, items, g.learnedAt ?? 0) }))
     .filter(({ progress }) => progress.recentMeasured >= SLIPPING_MIN_GAMES && progress.recentHits / progress.recentMeasured < SLIPPING_RATE);
-}
-
-/** How often the player's self-grade matched what the data says. */
-function selfReadAccuracy(grades) {
-  const judged = Object.values(grades).filter((g) => g.actualHit === true || g.actualHit === false);
-  const matched = judged.filter((g) => g.selfHit === g.actualHit).length;
-  return { judged: judged.length, matched };
 }
 
 /** Ranked games in the window played outside any started session. */

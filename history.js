@@ -69,9 +69,11 @@ async function syncMatchHistory(accountId, onProgress) {
     return profile ? { entry, profile } : null;
   });
 
-  const items = (await runWithConcurrency(tasks, HISTORY_FETCH_CONCURRENCY))
+  const results = await runWithConcurrency(tasks, HISTORY_FETCH_CONCURRENCY);
+  const missing = results.filter((it) => !it).length;
+  const items = results
     .filter(Boolean)
     .filter((it) => !it.profile.isBot && !it.profile.notScored);
   saveCachedHistory(accountId, items, liveHistory);
-  return { items, recent: loadCachedHistory(accountId)?.recent ?? [] };
+  return { items, missing, recent: loadCachedHistory(accountId)?.recent ?? [], syncedAt: loadCachedHistory(accountId)?.syncedAt };
 }

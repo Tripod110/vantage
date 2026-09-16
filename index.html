@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vantage</title>
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <h1>Vantage</h1>
-      <p class="tagline">Your last 20 games, read closely</p>
+      <p class="tagline">Your last 10 games, read closely</p>
     </div>
     <nav id="tabs" class="tabs" hidden>
       <button class="tab" data-tab="dashboard">Dashboard</button>
@@ -26,7 +26,7 @@
         <label for="steam-input">Steam profile link or account ID</label>
         <input id="steam-input" type="text" autocapitalize="none" spellcheck="false" placeholder="https://steamcommunity.com/profiles/..." aria-describedby="steam-input-help" required>
         <p id="steam-input-help" class="hint">Paste a numeric Steam profile link, SteamID64, or account ID. Custom /id/ links are not supported yet.</p>
-        <p class="hint">Vantage keeps your last 20 ranked games on this device and only fetches what's new after that.</p>
+        <p class="hint">Vantage keeps your last 10 ranked games on this device and only fetches what's new after that.</p>
         <label class="toggle-row">
           <input id="teaching-toggle" type="checkbox">
           <span>Teaching mode &mdash; explain terms as it goes</span>
@@ -42,20 +42,24 @@
       <div id="review-card"></div>
     </section>
 
-    <p id="status" class="status"></p>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
   </main>
 
-  <script src="steamid.js?v=8"></script>
-  <script src="api.js?v=8"></script>
-  <script src="queue.js?v=8"></script>
-  <script src="store.js?v=8"></script>
-  <script src="assets.js?v=8"></script>
-  <script src="history.js?v=8"></script>
-  <script src="analyze.js?v=8"></script>
-  <script src="sessions.js?v=8"></script>
-  <script src="goals.js?v=8"></script>
-  <script src="charts.js?v=8"></script>
-  <script src="dashboard.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="steamid.js?v=9"></script>
+  <script src="api.js?v=9"></script>
+  <script src="queue.js?v=9"></script>
+  <script src="store.js?v=9"></script>
+  <script src="assets.js?v=9"></script>
+  <script src="history.js?v=9"></script>
+  <script src="analyze.js?v=9"></script>
+  <script src="sessions.js?v=9"></script>
+  <script src="goals.js?v=9"></script>
+  <script src="grading.js?v=9"></script>
+  <script src="coaching.js?v=9"></script>
+  <script src="charts.js?v=9"></script>
+  <script src="dashboard.js?v=9"></script>
+  <script src="experience.js?v=9"></script>
+  <script src="review-table.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

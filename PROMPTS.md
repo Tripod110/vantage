@@ -585,3 +585,40 @@ list other potential ideas..."
   Pages source change.
 - Lesson: before saying "deployed", check what Pages is actually serving
   (`gh api repos/Tripod110/vantage/pages`), not just that `main` was pushed.
+
+## 2026-09-15 — Ten-game coaching and automatic match grades
+
+The owner requested the next iteration across coaching, dashboard polish, and
+match review. During planning they explicitly chose:
+
+- A 10-game ranked window, superseding the original 20-game requirement.
+- Vantage grades automatically: both S–F personal-form letters against the
+  other available games and a separate committed-goal verdict.
+- Optional notes/tags; no self-grade input or self-read accuracy.
+- Deeper review using existing match data, without video or a new service.
+
+Implemented the agreed four-metric, equal-weight relative rubric with half
+credit for ties and minimum evidence requirements. Dashboard tiles now show
+hero/result/grade; review exposes the rubric, target evidence, and an interactive
+chart with timestamp buttons, keyboard inspection, and coverage-aware averages.
+
+Added versioned coaching state with session goal snapshots, half-open commitment
+intervals, retained closed-session verdicts, goal graduation, conservative legacy
+association recovery, and immediately saved reflections. Cache reads and writes
+now cap ranked profiles at ten; all-mode activity entries stay separately bounded.
+Explicit Refresh preserves cached data and selected matches, with failure status.
+
+Found and corrected missing API fields being converted to favorable zeroes and
+short matches being assigned later timed measurements. PROFILE_VERSION is now 3,
+so older profiles refresh once; unchanged valid v3 profiles make no metadata calls.
+
+Validation: 36 Node regression tests passed with --test-isolation=none in the
+restricted Windows environment; all browser scripts passed node --check. Live
+account 186993885 and a separate synthetic fixture exercised grades, coaching,
+reflections, cache failure, teaching mode, timestamp/keyboard inspection, and
+375px layout without horizontal overflow. The fixture never loads in production.
+
+Updated README, CREDITS, and docs/handoff-prompt.md so a new machine can continue
+from the repository. Implementation branch: codex/ten-game-coaching, based on
+existing origin/main history. Asset version v9. Final deployment status is recorded
+in the current handoff rather than inferred from a successful push.

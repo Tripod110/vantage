@@ -33,7 +33,12 @@ const Store = {
     { entry, profile } pairs (most-recent-first), the light entries of recent
     matches in every mode (for sessions), and when it was last synced. */
 function loadCachedHistory(accountId) {
-  return Store.get(`history:${accountId}`, null);
+  const cache = Store.get(`history:${accountId}`, null);
+  if (!cache) return null;
+  const items = rankedWindow(cache.items ?? []);
+  const normalized = { ...cache, items };
+  if (JSON.stringify(items) !== JSON.stringify(cache.items)) Store.set(`history:${accountId}`, normalized);
+  return normalized;
 }
 
 const RECENT_ENTRY_FIELDS = ['match_id', 'hero_id', 'start_time', 'match_duration_s', 'match_mode', 'match_result', 'player_team', 'player_kills', 'player_deaths', 'player_assists', 'net_worth'];
@@ -41,7 +46,19 @@ const RECENT_ENTRY_LIMIT = 100;
 
 function saveCachedHistory(accountId, items, recentEntries = []) {
   const recent = recentEntries.slice(0, RECENT_ENTRY_LIMIT).map((e) => Object.fromEntries(RECENT_ENTRY_FIELDS.map((f) => [f, e[f]])));
-  Store.set(`history:${accountId}`, { items, recent, syncedAt: Date.now() });
+  Store.set(`history:${accountId}`, { items: rankedWindow(items), recent, syncedAt: Date.now() });
+}
+
+function loadCoaching(accountId) {
+  const saved = Store.get(`coaching:${accountId}`, null);
+  if (saved?.version === COACHING_VERSION) return saved;
+  const coaching = migrateCoaching(loadGoalState(accountId), loadSessionLog(accountId));
+  saveCoaching(accountId, coaching);
+  return coaching;
+}
+
+function saveCoaching(accountId, coaching) {
+  Store.set(`coaching:${accountId}`, coaching);
 }
 
 /* Goals and sessions, per account. Shape:

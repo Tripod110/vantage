@@ -43,8 +43,7 @@ by Valve.
 - **Status:** partly implemented (2026-09-14):
   - **Shipped** — measurable yes/no goals judged independently of the
     result (`goals.js`); rank demoted from the headline; a goal log that
-    marks goals learned and keeps re-checking them for slipping; per-game
-    self-grading as practice at identifying your own mistakes.
+    marks goals learned and keeps re-checking them for slipping; automatic goal verdicts and optional notes/tags (updated 2026-09-15; self-grading removed at the owner's request).
   - **Not yet** — the loading phase, the execution vs. understanding split,
     the full regression timeline, the 40/40/20 heuristic, and the 55%
     benchmark.

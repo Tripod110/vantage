@@ -1,8 +1,5 @@
-/* Vantage — the homepage. Leads with what's been happening lately, then the one
-   goal you're working on (and whether you're actually grading yourself on it),
-   then what separates your wins from your losses, then the 20-game window as a
-   selector with a detail pane. Rank is deliberately small: the goal is the
-   headline, not the ladder. Pure rendering — app.js owns state and actions.
+/* Shared formatting, identity, session facts, and win/loss comparisons.
+   experience.js composes the ten-game dashboard; app.js owns state/actions.
    Everything external (Steam names, hero names, notes) goes through esc(). */
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -45,42 +42,6 @@ const clock = (unixSeconds) => new Date(unixSeconds * 1000).toLocaleTimeString([
 const compactSouls = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${Math.round(n)}`);
 const record = (w, l) => `${w}<span class="dash">&ndash;</span>${l}`;
 const isWinEntry = (e) => e.match_result === e.player_team;
-
-/** Everything the homepage shows, derived once per render. */
-function buildDashboardModel({ items, recent, mmr, goals, sessionLog, nowS }) {
-  const profiles = items.map((it) => it.profile);
-  const sep = separators(profiles);
-  const learnedMetrics = new Set(goals.learned.map((g) => g.metric));
-  const suggestions = suggestGoals(sep, Date.now(), 5).filter((g) => !learnedMetrics.has(g.metric)).slice(0, 3);
-  const openSession = sessionLog.length && sessionLog[sessionLog.length - 1].endedAt == null ? sessionLog[sessionLog.length - 1] : null;
-
-  const active = goals.active;
-  const progress = active ? goalProgress(active, items) : null;
-  const pending =
-    active && openSession
-      ? items.filter((it) => it.entry.start_time * 1000 >= Math.max(openSession.startedAt, active.setAt) && !goals.grades[it.entry.match_id])
-      : [];
-  const graded = Object.entries(goals.grades)
-    .map(([matchId, g]) => ({ matchId: Number(matchId), ...g }))
-    .sort((a, b) => b.gradedAt - a.gradedAt);
-
-  const sessions = buildSessions(recent);
-  return {
-    sep,
-    split: splitRecord(profiles, (p) => p.soulsVsLobby10, 0),
-    suggestions,
-    openSession,
-    progress,
-    pending,
-    graded,
-    accuracy: selfReadAccuracy(goals.grades),
-    slipping: slippingGoals(goals.learned, items),
-    withoutSession: gamesWithoutSession(items, sessionLog),
-    lastSession: sessions[0] ?? null,
-    load: loadFacts(recent, nowS),
-    trend: rankTrendFacts(mmr, nowS)
-  };
-}
 
 /* ── Sections ──────────────────────────────────────────────────────────── */
 
@@ -159,99 +120,6 @@ function evidenceText(ev) {
   return `Your ${ev.nW} wins: <strong>${esc(ev.fmt ? ev.fmt(ev.winMean) : Math.round(ev.winMean * 10) / 10)}</strong> &middot; your ${ev.nL} losses: <strong>${esc(ev.fmt ? ev.fmt(ev.lossMean) : Math.round(ev.lossMean * 10) / 10)}</strong>`;
 }
 
-function pendingRowHtml(it) {
-  const { entry, profile } = it;
-  const icon = heroIcon(entry.hero_id);
-  const tags = ['laning', 'positioning', 'fights', 'farm', 'objectives', 'tilted'];
-  return `
-  <div class="grade-row" data-match-id="${entry.match_id}">
-    <div class="grade-game">
-      ${icon ? `<img class="hero-icon" src="${esc(icon)}" alt="">` : ''}
-      <span>${esc(heroName(entry.hero_id))}</span>
-      <span class="${profile.win ? 'up' : 'down'}">${profile.win ? 'Win' : 'Loss'}</span>
-      <span class="faint">${relativeTime(entry.start_time)}</span>
-    </div>
-    <p class="grade-q">Before you see the data: did you hit your goal?</p>
-    <div class="chips">${tags.map((t) => `<button class="chip" data-action="tag" data-tag="${t}">${t}</button>`).join('')}</div>
-    <input class="grade-note" type="text" maxlength="200" placeholder="What went wrong or right? (optional)">
-    <div class="grade-buttons">
-      <button class="btn-hit" data-action="grade" data-hit="1">I hit it</button>
-      <button class="btn-miss" data-action="grade" data-hit="0">I missed it</button>
-    </div>
-  </div>`;
-}
-
-function goalHtml(m, goals, items) {
-  const active = goals.active;
-  const acc = m.accuracy;
-  const accText = acc.judged ? `Your self-grade matched the data in <strong>${acc.matched} of ${acc.judged}</strong> games.` : '';
-  const without = m.withoutSession.total ? `<strong>${m.withoutSession.without} of your last ${m.withoutSession.total}</strong> ranked games were played without a session goal.` : '';
-  const slipping = m.slipping
-    .map(({ goal, progress }) => `<li>Slipping: <strong>${esc(goal.label)}</strong> &mdash; hit ${progress.recentHits} of last ${progress.recentMeasured}</li>`)
-    .join('');
-
-  if (!active) {
-    return `
-    <section class="card goal-card fade-in">
-      <h3 class="card-label accent">Pick one goal before you queue</h3>
-      <p class="lede">One measurable thing per session, judged yes or no whether you win or lose.</p>
-      <div class="suggestions">
-        ${m.suggestions
-          .map(
-            (g, i) => `
-          <div class="suggestion">
-            <div>
-              <span class="goal-label">${esc(g.label)}</span>
-              <span class="faint">${g.source === 'wins' ? evidenceText(g.evidence) : 'Starting target &mdash; not enough wins in the window to derive one yet'}</span>
-            </div>
-            <button class="btn-primary" data-action="adopt" data-index="${i}">Start session</button>
-          </div>`
-          )
-          .join('')}
-      </div>
-      ${goals.learned.length ? `<p class="faint">Learned so far: ${goals.learned.map((g) => esc(g.label)).join(' &middot; ')}</p>` : ''}
-      ${slipping ? `<ul class="slipping">${slipping}</ul>` : ''}
-      ${without ? `<p class="fact">${without}</p>` : ''}
-    </section>`;
-  }
-
-  const p = m.progress;
-  const progressText = p.measured
-    ? `Hit in <strong>${p.hits} of ${p.measured}</strong> games since you set it${p.measured > 10 ? ` &middot; last 10: <strong>${p.recentHits}/10</strong>` : ''}. Learned at 8 of the last 10.`
-    : 'No ranked games since you set it yet.';
-  const recentGraded = m.graded
-    .slice(0, 3)
-    .map((g) => {
-      const it = items.find((x) => x.entry.match_id === g.matchId);
-      const hero = it ? esc(heroName(it.entry.hero_id)) : 'Game';
-      const verdict = g.actualHit === null ? 'data couldn’t judge it' : `data says <strong>${g.actualHit ? 'hit' : 'miss'}</strong>`;
-      const matched = g.actualHit === null ? '' : g.selfHit === g.actualHit ? '<span class="up">read matched</span>' : '<span class="down">read didn’t match</span>';
-      return `<li>${hero}: you said <strong>${g.selfHit ? 'hit' : 'miss'}</strong>, ${verdict} ${matched}${g.note ? ` &middot; <em>${esc(g.note)}</em>` : ''}</li>`;
-    })
-    .join('');
-
-  return `
-  <section class="card goal-card fade-in">
-    <div class="card-head">
-      <h3 class="card-label accent">${m.openSession ? `Session running &middot; started ${relativeTime(m.openSession.startedAt / 1000)}` : 'Your goal'}</h3>
-      <button class="link-btn" data-action="change-goal">Change goal</button>
-    </div>
-    <p class="goal-title">${esc(active.label)}</p>
-    <p class="faint">${active.source === 'wins' ? `Set from your ${active.nWins} winning games` : 'Starting target'}</p>
-    <p class="fact">${progressText}</p>
-    ${accText ? `<p class="fact">${accText}</p>` : ''}
-    ${
-      m.openSession
-        ? `${m.pending.length ? `<div class="pending"><h4>${m.pending.length} game${m.pending.length === 1 ? '' : 's'} to grade</h4>${m.pending.map(pendingRowHtml).join('')}</div>` : '<p class="faint">Play a ranked game &mdash; it shows up here to grade once it syncs.</p>'}
-           <button class="btn-ghost" data-action="end-session">End session</button>`
-        : `<button class="btn-primary" data-action="start-session">Start session</button>`
-    }
-    ${recentGraded ? `<ul class="graded">${recentGraded}</ul>` : ''}
-    ${slipping ? `<ul class="slipping">${slipping}</ul>` : ''}
-    ${without ? `<p class="fact">${without}</p>` : ''}
-  </section>`;
-}
-
 function separatorsHtml(m) {
   const sep = m.sep;
   if (!sep.ok) {
@@ -281,78 +149,4 @@ function separatorsHtml(m) {
     ${splitHtml}
     <p class="faint">Averages from ${sep.nWins} wins and ${sep.nLosses} losses &mdash; a pattern in your last games, not a proven cause.</p>
   </section>`;
-}
-
-function windowHtml(items, selectedMatchId, teaching, goals) {
-  if (!items.length) return '';
-  const chrono = [...items].reverse();
-  const spm = (it) => it.entry.net_worth / Math.max(1, it.entry.match_duration_s / 60);
-  const vals = chrono.map(spm);
-  const lo = Math.min(...vals);
-  const hi = Math.max(...vals);
-  const wins = items.filter((it) => it.profile.win).length;
-  const selected = items.find((it) => it.entry.match_id === selectedMatchId) ?? items[0];
-
-  const tiles = chrono
-    .map((it) => {
-      const h = hi > lo ? 25 + ((spm(it) - lo) / (hi - lo)) * 70 : 60;
-      const sel = it.entry.match_id === selected.entry.match_id;
-      return `<button class="tile ${it.profile.win ? 'win' : 'loss'}${sel ? ' selected' : ''}" data-action="select" data-match-id="${it.entry.match_id}" title="${esc(heroName(it.entry.hero_id))} &middot; ${it.profile.win ? 'Win' : 'Loss'}"><span style="height:${h.toFixed(0)}%"></span></button>`;
-    })
-    .join('');
-
-  const { entry, profile } = selected;
-  const others = items.filter((it) => it !== selected).map((it) => it.profile);
-  const baseline = rollingBaseline(others, others.length);
-  const itemsBaseline = baseline.metrics.itemsBy10?.n ? baseline.metrics.itemsBy10.median : null;
-  const moments = buildFlaggedMoments(profile, itemsBaseline, teaching).slice(0, 3);
-  const grade = goals.grades[entry.match_id];
-  const icon = heroIcon(entry.hero_id);
-  const fmtLobby = profile.soulsVsLobby10 === null ? '&ndash;' : `${profile.soulsVsLobby10 >= 0 ? '+' : '−'}${Math.round(Math.abs(profile.soulsVsLobby10)).toLocaleString('en-US')}`;
-
-  return `
-  <section class="card window-card fade-in">
-    <div class="card-head">
-      <h3 class="card-label">Your window &middot; last ${items.length} ranked games</h3>
-      <span class="faint">${record(wins, items.length - wins)} &middot; ${Math.round((wins / items.length) * 100)}% &middot; bar height = souls/min</span>
-    </div>
-    <div class="tiles">${tiles}</div>
-    <div class="detail">
-      <div class="detail-main">
-        <div class="detail-hero">
-          ${icon ? `<img class="hero-icon lg" src="${esc(icon)}" alt="">` : ''}
-          <div>
-            <span class="detail-name">${esc(heroName(entry.hero_id))}</span>
-            <span class="${profile.win ? 'up' : 'down'}">${profile.win ? 'Win' : 'Loss'}</span>
-            <span class="faint">${duration(profile.durationS)} &middot; ${relativeTime(entry.start_time)}</span>
-          </div>
-        </div>
-        <div class="detail-stats">
-          <div><strong>${profile.kills}/${profile.deaths}/${profile.assists}</strong><span>K/D/A</span></div>
-          <div><strong>${compactSouls(entry.net_worth)}</strong><span>souls</span></div>
-          <div><strong>${profile.deathsBy10 ?? '&ndash;'}</strong><span>deaths by 10</span></div>
-          <div><strong>${fmtLobby}</strong><span>vs lobby @10</span></div>
-        </div>
-        ${grade ? `<p class="fact">Goal &ldquo;${esc(grade.goalLabel)}&rdquo;: you said <strong>${grade.selfHit ? 'hit' : 'miss'}</strong>, data says <strong>${grade.actualHit === null ? 'n/a' : grade.actualHit ? 'hit' : 'miss'}</strong></p>` : ''}
-      </div>
-      <div class="detail-moments">
-        ${moments.length ? moments.map((mo) => `<div class="moment ${mo.tone}"><span class="ts">${duration(mo.atS)}</span><span>${esc(mo.text)}</span></div>`).join('') : '<p class="faint">Nothing notable flagged this game.</p>'}
-        <button class="link-btn accent" data-action="review" data-match-id="${entry.match_id}">Full review &rarr;</button>
-      </div>
-    </div>
-  </section>`;
-}
-
-/** Renders the homepage and returns the model (app.js needs the suggestions it offered). */
-function renderDashboard(container, { accountId, items, recent, steam, mmr, goals, sessionLog, selectedMatchId, teaching }) {
-  const nowS = Date.now() / 1000;
-  const model = buildDashboardModel({ items, recent, mmr, goals, sessionLog, nowS });
-  container.innerHTML = [
-    identityHtml(accountId, steam, mmr),
-    recentlyHtml(model, nowS),
-    goalHtml(model, goals, items),
-    separatorsHtml(model),
-    windowHtml(items, selectedMatchId, teaching, goals)
-  ].join('');
-  return model;
 }

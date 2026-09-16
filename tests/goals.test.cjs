@@ -34,16 +34,6 @@ test('learned goals that drop below 50% are reported as slipping', () => {
   assert.equal(ctx.slippingGoals(learned, fine).length, 0);
 });
 
-test('self-read accuracy ignores games the data could not judge', () => {
-  const r = ctx.selfReadAccuracy({
-    a: { selfHit: true, actualHit: true },
-    b: { selfHit: true, actualHit: false },
-    c: { selfHit: false, actualHit: null }
-  });
-  assert.equal(r.judged, 2);
-  assert.equal(r.matched, 1);
-});
-
 test('suggestions come from real separators, and fall back to defaults with too few wins', () => {
   const now = 5;
   const few = ctx.separators([prof({ win: true }), prof({}), prof({}), prof({})]);
